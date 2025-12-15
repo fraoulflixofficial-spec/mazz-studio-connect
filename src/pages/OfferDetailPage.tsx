@@ -1,0 +1,185 @@
+import { useState, useEffect } from 'react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { Header } from '@/components/user/Header';
+import { Offer } from '@/types';
+import { subscribeToOffers, createOrder, decrementOfferStock } from '@/lib/database';
+import { formatPrice } from '@/lib/helpers';
+import { Gift, Minus, Plus, ShoppingCart, ArrowLeft } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+
+export default function OfferDetailPage() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [offer, setOffer] = useState<Offer | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [qty, setQty] = useState(1);
+
+  useEffect(() => {
+    const unsub = subscribeToOffers((offers) => {
+      const found = offers.find((o) => o.id === id);
+      setOffer(found || null);
+      setLoading(false);
+    });
+    return unsub;
+  }, [id]);
+
+  const handleOrderNow = () => {
+    if (!offer) return;
+    // Navigate to offer checkout with offer data
+    navigate(`/offer-checkout/${offer.id}?qty=${qty}`);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container mx-auto px-4 py-8">
+          <div className="animate-pulse space-y-4">
+            <div className="aspect-square max-w-md bg-muted rounded-2xl" />
+            <div className="h-8 bg-muted rounded w-3/4" />
+            <div className="h-6 bg-muted rounded w-1/2" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!offer) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container mx-auto px-4 py-16 text-center">
+          <Gift className="w-16 h-16 mx-auto text-muted-foreground/50 mb-4" />
+          <h1 className="text-2xl font-bold mb-2">Offer Not Found</h1>
+          <p className="text-muted-foreground mb-6">This offer may have expired or been removed.</p>
+          <Link to="/offers" className="text-accent hover:underline">
+            ← Back to Offers
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const savings = offer.originalPrice ? offer.originalPrice - offer.comboPrice : 0;
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Header />
+
+      <main className="container mx-auto px-4 py-6">
+        {/* Back Button */}
+        <Link
+          to="/offers"
+          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Offers
+        </Link>
+
+        <div className="grid lg:grid-cols-2 gap-8">
+          {/* Image */}
+          <div className="relative">
+            <img
+              src={offer.image || '/placeholder.svg'}
+              alt={offer.title}
+              className="w-full aspect-square object-cover rounded-2xl"
+            />
+            <div className="absolute top-4 left-4 px-4 py-2 bg-accent text-accent-foreground font-bold rounded-full flex items-center gap-2">
+              <Gift className="w-4 h-4" />
+              SPECIAL OFFER
+            </div>
+          </div>
+
+          {/* Details */}
+          <div className="space-y-6">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-display font-bold mb-3">
+                {offer.title}
+              </h1>
+              <p className="text-muted-foreground">{offer.description}</p>
+            </div>
+
+            {/* Price */}
+            <div className="bg-card border border-border rounded-xl p-4">
+              <div className="flex items-baseline gap-3 mb-2">
+                <span className="text-3xl font-bold text-accent">
+                  {formatPrice(offer.comboPrice)}
+                </span>
+                {offer.originalPrice && offer.originalPrice > offer.comboPrice && (
+                  <span className="text-lg text-muted-foreground line-through">
+                    {formatPrice(offer.originalPrice)}
+                  </span>
+                )}
+              </div>
+              {savings > 0 && (
+                <p className="text-sm text-green-500 font-medium">
+                  You save {formatPrice(savings)}!
+                </p>
+              )}
+            </div>
+
+            {/* Stock Status */}
+            <div className="flex items-center gap-2">
+              {offer.stock > 0 ? (
+                <>
+                  <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                  <span className="text-sm text-green-500">
+                    In Stock ({offer.stock} available)
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span className="w-2 h-2 bg-destructive rounded-full" />
+                  <span className="text-sm text-destructive">Out of Stock</span>
+                </>
+              )}
+            </div>
+
+            {/* Quantity Selector */}
+            <div className="flex items-center gap-4">
+              <span className="text-sm font-medium">Quantity:</span>
+              <div className="flex items-center border border-border rounded-lg">
+                <button
+                  onClick={() => setQty(Math.max(1, qty - 1))}
+                  className="p-3 hover:bg-muted transition-colors"
+                  disabled={qty <= 1}
+                >
+                  <Minus className="w-4 h-4" />
+                </button>
+                <span className="w-12 text-center font-medium">{qty}</span>
+                <button
+                  onClick={() => setQty(Math.min(offer.stock, qty + 1))}
+                  className="p-3 hover:bg-muted transition-colors"
+                  disabled={qty >= offer.stock}
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Total */}
+            <div className="bg-muted/50 rounded-xl p-4">
+              <div className="flex justify-between items-center">
+                <span className="font-medium">Total:</span>
+                <span className="text-2xl font-bold text-accent">
+                  {formatPrice(offer.comboPrice * qty)}
+                </span>
+              </div>
+            </div>
+
+            {/* Order Button */}
+            <button
+              onClick={handleOrderNow}
+              disabled={offer.stock <= 0}
+              className="w-full py-4 bg-accent text-accent-foreground rounded-xl font-semibold text-lg hover:bg-accent/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              <ShoppingCart className="w-5 h-5" />
+              Order Now
+            </button>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}

@@ -61,3 +61,19 @@ export interface CartItem {
   selectedColor?: string;
 }
 
+export interface Offer {
+  id: string;
+  title: string;
+  description: string;
+  image: string;
+  comboPrice: number;
+  originalPrice?: number;
+  stock: number;
+  createdAt: number;
+}
+
+export interface OfferCartItem {
+  offer: Offer;
+  qty: number;
+}
+

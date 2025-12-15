@@ -1,6 +1,6 @@
 import { ref, get, set, push, remove, update, onValue } from 'firebase/database';
 import { database } from '@/lib/firebase';
-import { Product, SliderItem, Order } from '@/types';
+import { Product, SliderItem, Order, Offer } from '@/types';
 
 // Products
 export const getProducts = async (): Promise<Product[]> => {
@@ -131,6 +131,57 @@ export const decrementStock = async (productId: string, qty: number): Promise<vo
   if (snapshot.exists()) {
     const currentStock = snapshot.val();
     await update(ref(database, `products/${productId}`), {
+      stock: Math.max(0, currentStock - qty),
+    });
+  }
+};
+
+// Offers
+export const getOffers = async (): Promise<Offer[]> => {
+  const snapshot = await get(ref(database, 'offers'));
+  if (!snapshot.exists()) return [];
+  const data = snapshot.val();
+  return Object.entries(data).map(([id, offer]) => ({
+    id,
+    ...(offer as Omit<Offer, 'id'>),
+  }));
+};
+
+export const subscribeToOffers = (callback: (offers: Offer[]) => void) => {
+  const offersRef = ref(database, 'offers');
+  return onValue(offersRef, (snapshot) => {
+    if (!snapshot.exists()) {
+      callback([]);
+      return;
+    }
+    const data = snapshot.val();
+    const offers = Object.entries(data).map(([id, offer]) => ({
+      id,
+      ...(offer as Omit<Offer, 'id'>),
+    }));
+    callback(offers);
+  });
+};
+
+export const addOffer = async (offer: Omit<Offer, 'id'>): Promise<string> => {
+  const newRef = push(ref(database, 'offers'));
+  await set(newRef, offer);
+  return newRef.key!;
+};
+
+export const updateOffer = async (id: string, offer: Partial<Offer>): Promise<void> => {
+  await update(ref(database, `offers/${id}`), offer);
+};
+
+export const deleteOffer = async (id: string): Promise<void> => {
+  await remove(ref(database, `offers/${id}`));
+};
+
+export const decrementOfferStock = async (offerId: string, qty: number): Promise<void> => {
+  const snapshot = await get(ref(database, `offers/${offerId}/stock`));
+  if (snapshot.exists()) {
+    const currentStock = snapshot.val();
+    await update(ref(database, `offers/${offerId}`), {
       stock: Math.max(0, currentStock - qty),
     });
   }

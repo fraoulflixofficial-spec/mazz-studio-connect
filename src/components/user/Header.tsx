@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useTheme } from '@/contexts/ThemeContext';
-import { ShoppingCart, Menu, X, Home, Sun, Moon, Package, Phone } from 'lucide-react';
+import { ShoppingCart, Menu, X, Home, Sun, Moon, Package, Phone, Gift } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { useState } from 'react';
 import { FEATURED_CATEGORIES } from '@/types';
@@ -42,18 +42,27 @@ export function Header() {
             </span>
           </Link>
 
-          {/* Right - Cart */}
-          <Link
-            to="/checkout"
-            className="relative p-2 rounded-lg hover:bg-muted transition-colors"
-          >
-            <ShoppingCart className="w-6 h-6" />
-            {cartCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-5 h-5 bg-accent text-accent-foreground text-xs font-bold rounded-full flex items-center justify-center">
-                {cartCount}
-              </span>
-            )}
-          </Link>
+          {/* Right - Offers & Cart */}
+          <div className="flex items-center gap-1">
+            <Link
+              to="/offers"
+              className="relative p-2 rounded-lg hover:bg-muted transition-colors"
+              aria-label="Special Offers"
+            >
+              <Gift className="w-5 h-5 text-accent" />
+            </Link>
+            <Link
+              to="/checkout"
+              className="relative p-2 rounded-lg hover:bg-muted transition-colors"
+            >
+              <ShoppingCart className="w-6 h-6" />
+              {cartCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-5 h-5 bg-accent text-accent-foreground text-xs font-bold rounded-full flex items-center justify-center">
+                  {cartCount}
+                </span>
+              )}
+            </Link>
+          </div>
         </div>
       </header>
 
