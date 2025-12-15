@@ -1,4 +1,6 @@
-export const extractYouTubeId = (url: string): string | null => {
+export const extractYouTubeId = (url: string | undefined | null): string | null => {
+  if (!url) return null;
+  
   const patterns = [
     /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
     /youtube\.com\/shorts\/([^&\n?#]+)/,
@@ -11,11 +13,13 @@ export const extractYouTubeId = (url: string): string | null => {
   return null;
 };
 
-export const isYouTubeUrl = (url: string): boolean => {
+export const isYouTubeUrl = (url: string | undefined | null): boolean => {
+  if (!url) return false;
   return extractYouTubeId(url) !== null;
 };
 
-export const getYouTubeEmbedUrl = (url: string): string | null => {
+export const getYouTubeEmbedUrl = (url: string | undefined | null): string | null => {
+  if (!url) return null;
   const id = extractYouTubeId(url);
   if (!id) return null;
   return `https://www.youtube.com/embed/${id}?autoplay=1&mute=1&loop=1&playlist=${id}&controls=0&showinfo=0`;
