@@ -641,8 +641,11 @@ export function AdminDashboard() {
 
       {/* Product Modal */}
       {productModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4 overflow-y-auto">
-          <div className="w-full max-w-lg bg-card border border-border rounded-2xl shadow-2xl my-8">
+        <div 
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-background/80 backdrop-blur-sm p-4 overflow-y-auto"
+          onClick={(e) => e.target === e.currentTarget && setProductModalOpen(false)}
+        >
+          <div className="w-full max-w-lg bg-card border border-border rounded-2xl shadow-2xl my-8 animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between p-4 border-b border-border">
               <h2 className="font-display text-xl">
                 {editingProduct ? 'Edit Product' : 'Add Product'}
@@ -776,8 +779,11 @@ export function AdminDashboard() {
 
       {/* Slider Modal */}
       {sliderModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md bg-card border border-border rounded-2xl shadow-2xl">
+        <div 
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-background/80 backdrop-blur-sm p-4"
+          onClick={(e) => e.target === e.currentTarget && setSliderModalOpen(false)}
+        >
+          <div className="w-full max-w-md bg-card border border-border rounded-2xl shadow-2xl animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between p-4 border-b border-border">
               <h2 className="font-display text-xl">
                 {editingSlider ? 'Edit Slide' : 'Add Slide'}
@@ -836,8 +842,11 @@ export function AdminDashboard() {
 
       {/* Offer Modal */}
       {offerModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4 overflow-y-auto">
-          <div className="w-full max-w-lg bg-card border border-border rounded-2xl shadow-2xl my-8">
+        <div 
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-background/80 backdrop-blur-sm p-4 overflow-y-auto"
+          onClick={(e) => e.target === e.currentTarget && setOfferModalOpen(false)}
+        >
+          <div className="w-full max-w-lg bg-card border border-border rounded-2xl shadow-2xl my-8 animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between p-4 border-b border-border">
               <h2 className="font-display text-xl">
                 {editingOffer ? 'Edit Offer' : 'Add Offer'}
