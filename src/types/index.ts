@@ -41,6 +41,8 @@ export interface OrderItem {
   qty: number;
 }
 
+export type OrderStatus = 'placed' | 'confirmed' | 'packed' | 'shipped' | 'out_for_delivery' | 'delivered';
+
 export interface Order {
   id: string;
   customerName: string;
@@ -48,7 +50,7 @@ export interface Order {
   address: string;
   items: OrderItem[];
   total: number;
-  status: 'pending' | 'confirmed' | 'delivered';
+  status: OrderStatus;
   createdAt: number;
   notes?: string;
 }

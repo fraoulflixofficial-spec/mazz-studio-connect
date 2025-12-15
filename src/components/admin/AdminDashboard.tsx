@@ -283,9 +283,9 @@ export function AdminDashboard() {
             >
               <tab.icon className="w-4 h-4" />
               {tab.label}
-              {tab.id === 'orders' && orders.filter(o => o.status === 'pending').length > 0 && (
+              {tab.id === 'orders' && orders.filter(o => o.status === 'placed').length > 0 && (
                 <span className="ml-1 px-1.5 py-0.5 bg-destructive text-destructive-foreground text-xs rounded-full">
-                  {orders.filter(o => o.status === 'pending').length}
+                  {orders.filter(o => o.status === 'placed').length}
                 </span>
               )}
             </button>
@@ -421,9 +421,9 @@ export function AdminDashboard() {
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="font-medium">{order.customerName}</span>
-                        {order.status === 'pending' && (
+                        {order.status === 'placed' && (
                           <span className="px-2 py-0.5 bg-amber-500/20 text-amber-500 text-xs rounded-full flex items-center gap-1">
-                            <Clock className="w-3 h-3" /> Pending
+                            <Clock className="w-3 h-3" /> Placed
                           </span>
                         )}
                         {order.status === 'confirmed' && (
@@ -456,7 +456,7 @@ export function AdminDashboard() {
                     )}
                   </div>
                   <div className="p-4 bg-muted/30 flex gap-2 justify-end">
-                    {order.status === 'pending' && (
+                    {order.status === 'placed' && (
                       <button
                         onClick={() => handleConfirmOrder(order.id)}
                         className="flex items-center gap-2 px-3 py-2 bg-green-500/10 text-green-500 rounded-lg text-sm hover:bg-green-500/20 transition-colors"
