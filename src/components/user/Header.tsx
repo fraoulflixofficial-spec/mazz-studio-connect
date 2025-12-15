@@ -2,15 +2,25 @@ import { Link } from 'react-router-dom';
 import { useTheme } from '@/contexts/ThemeContext';
 import { ShoppingCart, Menu, X, Home, Sun, Moon, Package, Phone, Gift } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FEATURED_CATEGORIES } from '@/types';
+import { subscribeToOffers } from '@/lib/database';
+import { Offer } from '@/types';
+import { NotificationBadge } from './NotificationBadge';
 
 export function Header() {
   const { theme, toggleTheme } = useTheme();
   const { items } = useCart();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [offers, setOffers] = useState<Offer[]>([]);
+
+  useEffect(() => {
+    const unsubscribe = subscribeToOffers(setOffers);
+    return () => unsubscribe();
+  }, []);
 
   const cartCount = items.reduce((sum, item) => sum + item.qty, 0);
+  const offerCount = offers.filter(offer => offer.stock > 0).length;
 
   return (
     <>
@@ -46,10 +56,11 @@ export function Header() {
           <div className="flex items-center gap-1">
             <Link
               to="/offers"
-              className="relative p-2 rounded-lg hover:bg-muted transition-colors"
+              className="relative p-2 rounded-lg hover:bg-muted transition-colors group"
               aria-label="Special Offers"
             >
-              <Gift className="w-5 h-5 text-accent" />
+              <Gift className="w-5 h-5 text-accent group-hover:scale-110 transition-transform" />
+              <NotificationBadge count={offerCount} />
             </Link>
             <Link
               to="/checkout"
