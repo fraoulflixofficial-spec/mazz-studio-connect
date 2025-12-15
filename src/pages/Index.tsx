@@ -6,6 +6,7 @@ import { HeroSlider } from '@/components/user/HeroSlider';
 import { CategoryNav } from '@/components/user/CategoryNav';
 import { ProductGrid } from '@/components/user/ProductGrid';
 import { AdminButton } from '@/components/user/AdminButton';
+import { FloatingWhatsApp } from '@/components/user/FloatingWhatsApp';
 import { AdminLogin } from '@/components/admin/AdminLogin';
 import { AdminDashboard } from '@/components/admin/AdminDashboard';
 import { useAuth } from '@/contexts/AuthContext';
@@ -60,6 +61,7 @@ const Index = () => {
         </div>
       </footer>
 
+      <FloatingWhatsApp />
       <AdminButton onClick={() => setShowLoginModal(true)} />
       <AdminLogin isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
     </div>
