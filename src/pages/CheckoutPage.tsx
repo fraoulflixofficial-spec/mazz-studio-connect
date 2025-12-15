@@ -1,16 +1,15 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Header } from '@/components/user/Header';
 import { useCart } from '@/contexts/CartContext';
 import { formatPrice } from '@/lib/helpers';
 import { createOrder, decrementStock } from '@/lib/database';
-import { Trash2, Minus, Plus, MapPin, Phone, User, FileText } from 'lucide-react';
+import { Trash2, Minus, Plus, MapPin, Phone, User, FileText, CheckCircle2, Copy, Package } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export default function CheckoutPage() {
   const { items, updateQuantity, removeFromCart, clearCart, total } = useCart();
   const { toast } = useToast();
-  const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
     customerName: '',
@@ -19,6 +18,16 @@ export default function CheckoutPage() {
     notes: '',
   });
   const [loading, setLoading] = useState(false);
+  const [orderPlaced, setOrderPlaced] = useState(false);
+  const [orderId, setOrderId] = useState('');
+
+  const handleCopyOrderId = () => {
+    navigator.clipboard.writeText(orderId);
+    toast({
+      title: 'Copied!',
+      description: 'Order ID copied to clipboard.',
+    });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,8 +53,8 @@ export default function CheckoutPage() {
     setLoading(true);
 
     try {
-      // Create order
-      await createOrder({
+      // Create order and get the order ID
+      const newOrderId = await createOrder({
         customerName: formData.customerName,
         phone: formData.phone,
         address: formData.address,
@@ -67,11 +76,8 @@ export default function CheckoutPage() {
       }
 
       clearCart();
-      toast({
-        title: 'Order Placed!',
-        description: 'Your order has been placed successfully. We will contact you soon.',
-      });
-      navigate('/');
+      setOrderId(newOrderId);
+      setOrderPlaced(true);
     } catch (error) {
       toast({
         title: 'Error',
@@ -82,6 +88,63 @@ export default function CheckoutPage() {
       setLoading(false);
     }
   };
+
+  // Order Success Screen
+  if (orderPlaced) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="container max-w-lg mx-auto px-4 py-12">
+          <div className="bg-card border border-border rounded-2xl p-8 text-center">
+            <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+              <CheckCircle2 className="w-10 h-10 text-green-500" />
+            </div>
+            
+            <h1 className="text-2xl font-display font-bold mb-2">Order Placed!</h1>
+            <p className="text-muted-foreground mb-6">
+              Thank you for your order. We will contact you soon.
+            </p>
+
+            {/* Order Tracking Code */}
+            <div className="bg-muted/50 rounded-xl p-6 mb-6">
+              <p className="text-sm text-muted-foreground mb-2">Your Order Tracking Code</p>
+              <div className="flex items-center justify-center gap-2">
+                <code className="text-lg font-mono font-bold text-accent break-all">
+                  {orderId}
+                </code>
+                <button
+                  onClick={handleCopyOrderId}
+                  className="p-2 hover:bg-muted rounded-lg transition-colors"
+                  title="Copy Order ID"
+                >
+                  <Copy className="w-5 h-5" />
+                </button>
+              </div>
+              <p className="text-xs text-muted-foreground mt-3">
+                Save this code to track your order status
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <Link
+                to={`/track-order`}
+                className="flex items-center justify-center gap-2 w-full py-3 bg-accent text-accent-foreground rounded-xl font-medium hover:bg-accent/90 transition-colors"
+              >
+                <Package className="w-5 h-5" />
+                Track Your Order
+              </Link>
+              <Link
+                to="/"
+                className="w-full py-3 border border-border rounded-xl font-medium hover:bg-muted transition-colors"
+              >
+                Continue Shopping
+              </Link>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
