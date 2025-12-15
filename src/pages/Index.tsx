@@ -5,7 +5,6 @@ import { Header } from '@/components/user/Header';
 import { HeroSlider } from '@/components/user/HeroSlider';
 import { CategoryNav } from '@/components/user/CategoryNav';
 import { ProductGrid } from '@/components/user/ProductGrid';
-import { Footer } from '@/components/user/Footer';
 import { AdminButton } from '@/components/user/AdminButton';
 import { AdminLogin } from '@/components/admin/AdminLogin';
 import { AdminDashboard } from '@/components/admin/AdminDashboard';
@@ -45,7 +44,21 @@ const Index = () => {
         </div>
       </main>
 
-      <Footer />
+      <footer className="border-t border-border bg-card mt-12">
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center">
+            <h3 className="font-display text-2xl text-foreground mb-2">
+              Mazzé<span className="text-accent">.</span>
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              Premium Audio & Tech Accessories
+            </p>
+            <p className="text-xs text-muted-foreground mt-4">
+              © {new Date().getFullYear()} Mazzé Studio. All rights reserved.
+            </p>
+          </div>
+        </div>
+      </footer>
 
       <AdminButton onClick={() => setShowLoginModal(true)} />
       <AdminLogin isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
