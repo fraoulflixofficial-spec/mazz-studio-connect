@@ -57,7 +57,7 @@ export default function CheckoutPage() {
           qty: item.qty,
         })),
         total,
-        status: 'pending',
+        status: 'placed',
         createdAt: Date.now(),
       });
 
