@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Product, SliderItem, Order, FEATURED_CATEGORIES } from '@/types';
+import { Product, SliderItem, Order, Offer, FEATURED_CATEGORIES } from '@/types';
 import {
   subscribeToProducts,
   addProduct,
@@ -13,6 +13,10 @@ import {
   subscribeToOrders,
   updateOrderStatus,
   deleteOrder,
+  subscribeToOffers,
+  addOffer,
+  updateOffer,
+  deleteOffer,
 } from '@/lib/database';
 import { formatPrice, isYouTubeUrl } from '@/lib/helpers';
 import { useToast } from '@/hooks/use-toast';
@@ -30,9 +34,10 @@ import {
   Check,
   Clock,
   Truck,
+  Gift,
 } from 'lucide-react';
 
-type Tab = 'products' | 'slider' | 'orders';
+type Tab = 'products' | 'slider' | 'orders' | 'offers';
 
 export function AdminDashboard() {
   const { logout, user } = useAuth();
@@ -41,6 +46,7 @@ export function AdminDashboard() {
   const [products, setProducts] = useState<Product[]>([]);
   const [sliderItems, setSliderItems] = useState<SliderItem[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [offers, setOffers] = useState<Offer[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
 
   // Product Modal State
@@ -79,14 +85,28 @@ export function AdminDashboard() {
     redirectUrl: '',
   });
 
+  // Offer Modal State
+  const [offerModalOpen, setOfferModalOpen] = useState(false);
+  const [editingOffer, setEditingOffer] = useState<Offer | null>(null);
+  const [offerForm, setOfferForm] = useState({
+    title: '',
+    description: '',
+    image: '',
+    comboPrice: 0,
+    originalPrice: 0,
+    stock: 0,
+  });
+
   useEffect(() => {
     const unsub1 = subscribeToProducts(setProducts);
     const unsub2 = subscribeToSlider(setSliderItems);
     const unsub3 = subscribeToOrders(setOrders);
+    const unsub4 = subscribeToOffers(setOffers);
     return () => {
       unsub1();
       unsub2();
       unsub3();
+      unsub4();
     };
   }, []);
 
@@ -237,8 +257,74 @@ export function AdminDashboard() {
     }
   };
 
+  // Offer handlers
+  const openOfferModal = (offer?: Offer) => {
+    if (offer) {
+      setEditingOffer(offer);
+      setOfferForm({
+        title: offer.title,
+        description: offer.description,
+        image: offer.image,
+        comboPrice: offer.comboPrice,
+        originalPrice: offer.originalPrice || 0,
+        stock: offer.stock,
+      });
+    } else {
+      setEditingOffer(null);
+      setOfferForm({
+        title: '',
+        description: '',
+        image: '',
+        comboPrice: 0,
+        originalPrice: 0,
+        stock: 0,
+      });
+    }
+    setOfferModalOpen(true);
+  };
+
+  const handleOfferSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const data = {
+      title: offerForm.title,
+      description: offerForm.description,
+      image: offerForm.image,
+      comboPrice: offerForm.comboPrice,
+      originalPrice: offerForm.originalPrice,
+      stock: offerForm.stock,
+      createdAt: editingOffer?.createdAt || Date.now(),
+    };
+
+    try {
+      if (editingOffer) {
+        await updateOffer(editingOffer.id, data);
+        toast({ title: 'Offer Updated' });
+      } else {
+        await addOffer(data);
+        toast({ title: 'Offer Added' });
+      }
+      setOfferModalOpen(false);
+    } catch (error) {
+      toast({ title: 'Error', variant: 'destructive' });
+    }
+  };
+
+  const handleDeleteOffer = async (id: string) => {
+    if (!confirm('Delete this offer?')) return;
+    try {
+      await deleteOffer(id);
+      toast({ title: 'Offer Deleted' });
+    } catch (error) {
+      toast({ title: 'Error', variant: 'destructive' });
+    }
+  };
+
   const filteredProducts = products.filter((p) =>
     p.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const filteredOffers = offers.filter((o) =>
+    o.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const sortedOrders = [...orders].sort((a, b) => b.createdAt - a.createdAt);
@@ -271,6 +357,7 @@ export function AdminDashboard() {
             { id: 'products', label: 'Products', icon: Package },
             { id: 'slider', label: 'Slider', icon: Image },
             { id: 'orders', label: 'Orders', icon: ShoppingCart },
+            { id: 'offers', label: 'Offer Box', icon: Gift },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -476,6 +563,80 @@ export function AdminDashboard() {
             )}
           </div>
         )}
+
+        {/* Offers Tab */}
+        {activeTab === 'offers' && (
+          <div className="space-y-4">
+            <div className="flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <input
+                  type="text"
+                  placeholder="Search offers..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2 bg-card border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/50"
+                />
+              </div>
+              <button
+                onClick={() => openOfferModal()}
+                className="flex items-center gap-2 px-4 py-2 bg-accent text-accent-foreground rounded-lg font-medium text-sm hover:bg-accent/90 transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+                Add Offer
+              </button>
+            </div>
+
+            <div className="grid gap-3">
+              {filteredOffers.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  <Gift className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                  <p>No offers yet. Add your first offer!</p>
+                </div>
+              ) : (
+                filteredOffers.map((offer) => (
+                  <div
+                    key={offer.id}
+                    className="flex items-center gap-4 p-4 bg-card border border-border rounded-xl"
+                  >
+                    <img
+                      src={offer.image || '/placeholder.svg'}
+                      alt=""
+                      className="w-16 h-16 object-cover rounded-lg"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-medium truncate">{offer.title}</h3>
+                      <p className="text-sm text-muted-foreground truncate">{offer.description}</p>
+                      <p className="text-sm text-accent font-semibold">
+                        {formatPrice(offer.comboPrice)}
+                        {offer.originalPrice && offer.originalPrice > offer.comboPrice && (
+                          <span className="ml-2 text-muted-foreground line-through text-xs">
+                            {formatPrice(offer.originalPrice)}
+                          </span>
+                        )}
+                        <span className="ml-2 text-xs text-muted-foreground">• Stock: {offer.stock}</span>
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => openOfferModal(offer)}
+                        className="p-2 hover:bg-muted rounded-lg transition-colors"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteOffer(offer.id)}
+                        className="p-2 hover:bg-destructive/10 text-destructive rounded-lg transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Product Modal */}
@@ -667,6 +828,92 @@ export function AdminDashboard() {
               >
                 <Save className="w-4 h-4" />
                 {editingSlider ? 'Update Slide' : 'Add Slide'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Offer Modal */}
+      {offerModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="w-full max-w-lg bg-card border border-border rounded-2xl shadow-2xl my-8">
+            <div className="flex items-center justify-between p-4 border-b border-border">
+              <h2 className="font-display text-xl">
+                {editingOffer ? 'Edit Offer' : 'Add Offer'}
+              </h2>
+              <button onClick={() => setOfferModalOpen(false)} className="p-2 hover:bg-muted rounded-full">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <form onSubmit={handleOfferSubmit} className="p-4 space-y-4 max-h-[70vh] overflow-y-auto">
+              <div>
+                <label className="block text-sm font-medium mb-1">Offer Title *</label>
+                <input
+                  type="text"
+                  value={offerForm.title}
+                  onChange={(e) => setOfferForm({ ...offerForm, title: e.target.value })}
+                  className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Description *</label>
+                <textarea
+                  value={offerForm.description}
+                  onChange={(e) => setOfferForm({ ...offerForm, description: e.target.value })}
+                  rows={3}
+                  className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm resize-none"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Image URL *</label>
+                <input
+                  type="url"
+                  value={offerForm.image}
+                  onChange={(e) => setOfferForm({ ...offerForm, image: e.target.value })}
+                  className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm"
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Combo Price (৳) *</label>
+                  <input
+                    type="number"
+                    value={offerForm.comboPrice}
+                    onChange={(e) => setOfferForm({ ...offerForm, comboPrice: Number(e.target.value) })}
+                    className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Original Price (৳)</label>
+                  <input
+                    type="number"
+                    value={offerForm.originalPrice}
+                    onChange={(e) => setOfferForm({ ...offerForm, originalPrice: Number(e.target.value) })}
+                    className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Stock *</label>
+                <input
+                  type="number"
+                  value={offerForm.stock}
+                  onChange={(e) => setOfferForm({ ...offerForm, stock: Number(e.target.value) })}
+                  className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm"
+                  required
+                />
+              </div>
+              <button
+                type="submit"
+                className="w-full py-3 bg-accent text-accent-foreground rounded-lg font-medium hover:bg-accent/90 transition-colors flex items-center justify-center gap-2"
+              >
+                <Save className="w-4 h-4" />
+                {editingOffer ? 'Update Offer' : 'Add Offer'}
               </button>
             </form>
           </div>
