@@ -66,7 +66,7 @@ export function AdminDashboard() {
   }>({
     name: '',
     price: 0,
-    images: ['', '', ''],
+    images: ['', '', '', '', ''],
     stock: 0,
     menuCategory: '',
     featuredCategory: FEATURED_CATEGORIES[0],
@@ -99,7 +99,7 @@ export function AdminDashboard() {
   }>({
     title: '',
     description: '',
-    images: ['', '', ''],
+    images: ['', '', '', '', ''],
     comboPrice: 0,
     originalPrice: 0,
     stock: 0,
@@ -131,7 +131,7 @@ export function AdminDashboard() {
       setProductForm({
         name: product.name,
         price: product.price,
-        images: [...product.images, '', ''].slice(0, 3),
+        images: [...product.images, '', '', '', '', ''].slice(0, 5),
         stock: product.stock,
         menuCategory: product.menuCategory,
         featuredCategory: product.featuredCategory,
@@ -145,7 +145,7 @@ export function AdminDashboard() {
       setProductForm({
         name: '',
         price: 0,
-        images: ['', '', ''],
+        images: ['', '', '', '', ''],
         stock: 0,
         menuCategory: '',
         featuredCategory: FEATURED_CATEGORIES[0],
@@ -279,7 +279,7 @@ export function AdminDashboard() {
       setOfferForm({
         title: offer.title,
         description: offer.description,
-        images: [...existingImages, '', '', ''].slice(0, 3),
+        images: [...existingImages, '', '', '', '', ''].slice(0, 5),
         comboPrice: offer.comboPrice,
         originalPrice: offer.originalPrice || 0,
         stock: offer.stock,
@@ -290,7 +290,7 @@ export function AdminDashboard() {
       setOfferForm({
         title: '',
         description: '',
-        images: ['', '', ''],
+        images: ['', '', '', '', ''],
         comboPrice: 0,
         originalPrice: 0,
         stock: 0,
@@ -706,7 +706,7 @@ export function AdminDashboard() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Image URLs (up to 3)</label>
+                <label className="block text-sm font-medium mb-1">Image URLs (up to 5)</label>
                 {productForm.images.map((img, idx) => (
                   <input
                     key={idx}
@@ -895,7 +895,7 @@ export function AdminDashboard() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Image URLs (up to 3)</label>
+                <label className="block text-sm font-medium mb-1">Image URLs (up to 5)</label>
                 {offerForm.images.map((img, idx) => (
                   <input
                     key={idx}
