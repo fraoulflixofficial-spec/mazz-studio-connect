@@ -5,6 +5,7 @@ import { subscribeToProducts } from '@/lib/database';
 import { formatPrice } from '@/lib/helpers';
 import { useCart } from '@/contexts/CartContext';
 import { Header } from '@/components/user/Header';
+import { RelatedProducts } from '@/components/user/RelatedProducts';
 import { ChevronLeft, Minus, Plus, ShoppingBag, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -206,6 +207,11 @@ export default function ProductPage() {
               </button>
             </div>
           </div>
+        </div>
+
+        {/* Related Products Section */}
+        <div className="max-w-6xl mx-auto">
+          <RelatedProducts currentProduct={product} allProducts={products} />
         </div>
       </main>
     </div>
