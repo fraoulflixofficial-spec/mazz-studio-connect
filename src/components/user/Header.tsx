@@ -25,50 +25,50 @@ export function Header() {
   return (
     <>
       <header className="sticky top-0 z-50 bg-background border-b border-border">
-        <div className="flex items-center justify-between h-14 px-4">
+        <div className="flex items-center justify-between h-14 lg:h-20 px-4 lg:px-8">
           {/* Left - Menu Button & Theme Toggle */}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 lg:gap-2">
             <button
               onClick={() => setMenuOpen(!menuOpen)}
-              className="p-2 rounded-lg hover:bg-muted transition-colors"
+              className="p-2 lg:p-3 rounded-lg hover:bg-muted transition-colors"
               aria-label="Toggle menu"
             >
-              {menuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {menuOpen ? <X className="w-6 h-6 lg:w-7 lg:h-7" /> : <Menu className="w-6 h-6 lg:w-7 lg:h-7" />}
             </button>
             <button
               onClick={toggleTheme}
-              className="p-2 rounded-lg hover:bg-muted transition-colors"
+              className="p-2 lg:p-3 rounded-lg hover:bg-muted transition-colors"
               aria-label="Toggle theme"
             >
-              {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+              {theme === 'dark' ? <Sun className="w-5 h-5 lg:w-6 lg:h-6" /> : <Moon className="w-5 h-5 lg:w-6 lg:h-6" />}
             </button>
           </div>
 
           {/* Center - Logo */}
-          <Link to="/" className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2">
-            <ShoppingCart className="w-6 h-6 text-accent" />
-            <span className="font-display text-lg font-bold tracking-wide text-foreground uppercase">
+          <Link to="/" className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 lg:gap-3">
+            <ShoppingCart className="w-6 h-6 lg:w-8 lg:h-8 text-accent" />
+            <span className="font-display text-lg lg:text-2xl font-bold tracking-wide text-foreground uppercase">
               Mazzé Studio
             </span>
           </Link>
 
           {/* Right - Offers & Cart */}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 lg:gap-2">
             <Link
               to="/offers"
-              className="relative p-2 rounded-lg hover:bg-muted transition-colors group"
+              className="relative p-2 lg:p-3 rounded-lg hover:bg-muted transition-colors group"
               aria-label="Special Offers"
             >
-              <Gift className="w-5 h-5 text-accent group-hover:scale-110 transition-transform" />
+              <Gift className="w-5 h-5 lg:w-6 lg:h-6 text-accent group-hover:scale-110 transition-transform" />
               <NotificationBadge count={offerCount} />
             </Link>
             <Link
               to="/checkout"
-              className="relative p-2 rounded-lg hover:bg-muted transition-colors"
+              className="relative p-2 lg:p-3 rounded-lg hover:bg-muted transition-colors"
             >
-              <ShoppingCart className="w-6 h-6" />
+              <ShoppingCart className="w-6 h-6 lg:w-7 lg:h-7" />
               {cartCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-5 h-5 bg-accent text-accent-foreground text-xs font-bold rounded-full flex items-center justify-center">
+                <span className="absolute -top-1 -right-1 w-5 h-5 lg:w-6 lg:h-6 bg-accent text-accent-foreground text-xs lg:text-sm font-bold rounded-full flex items-center justify-center">
                   {cartCount}
                 </span>
               )}
