@@ -7,6 +7,7 @@ import { CategoryNav } from '@/components/user/CategoryNav';
 import { ProductGrid } from '@/components/user/ProductGrid';
 import { AdminButton } from '@/components/user/AdminButton';
 import { FloatingWhatsApp } from '@/components/user/FloatingWhatsApp';
+import { AIAssistant } from '@/components/user/AIAssistant';
 import { AdminLogin } from '@/components/admin/AdminLogin';
 import { AdminDashboard } from '@/components/admin/AdminDashboard';
 import { useAuth } from '@/contexts/AuthContext';
@@ -61,6 +62,7 @@ const Index = () => {
         </div>
       </footer>
 
+      <AIAssistant />
       <FloatingWhatsApp />
       <AdminButton onClick={() => setShowLoginModal(true)} />
       <AdminLogin isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />

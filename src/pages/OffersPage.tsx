@@ -5,6 +5,8 @@ import { Offer } from '@/types';
 import { subscribeToOffers } from '@/lib/database';
 import { formatPrice } from '@/lib/helpers';
 import { Gift, ShoppingBag } from 'lucide-react';
+import { FloatingWhatsApp } from '@/components/user/FloatingWhatsApp';
+import { AIAssistant } from '@/components/user/AIAssistant';
 
 export default function OffersPage() {
   const [offers, setOffers] = useState<Offer[]>([]);
@@ -105,6 +107,8 @@ export default function OffersPage() {
           </div>
         )}
       </main>
+      <AIAssistant />
+      <FloatingWhatsApp />
     </div>
   );
 }

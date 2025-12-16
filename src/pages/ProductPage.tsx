@@ -6,6 +6,8 @@ import { formatPrice } from '@/lib/helpers';
 import { useCart } from '@/contexts/CartContext';
 import { Header } from '@/components/user/Header';
 import { RelatedProducts } from '@/components/user/RelatedProducts';
+import { FloatingWhatsApp } from '@/components/user/FloatingWhatsApp';
+import { AIAssistant } from '@/components/user/AIAssistant';
 import { ChevronLeft, Minus, Plus, ShoppingBag, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -221,6 +223,8 @@ export default function ProductPage() {
           <RelatedProducts currentProduct={product} allProducts={products} />
         </div>
       </main>
+      <AIAssistant />
+      <FloatingWhatsApp />
     </div>
   );
 }
