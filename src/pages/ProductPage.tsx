@@ -135,6 +135,13 @@ export default function ProductPage() {
               </p>
             </div>
 
+            {product.brand && (
+              <div className="flex items-center gap-2">
+                <span className="text-sm lg:text-base text-muted-foreground">Brand:</span>
+                <span className="text-sm lg:text-base font-medium text-foreground">{product.brand}</span>
+              </div>
+            )}
+
             <div className="flex items-center gap-2">
               {product.stock > 0 ? (
                 <>
