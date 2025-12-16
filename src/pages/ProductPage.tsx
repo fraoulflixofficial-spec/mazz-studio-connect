@@ -159,7 +159,7 @@ export default function ProductPage() {
             </div>
 
             {product.description && (
-              <p className="text-muted-foreground leading-relaxed lg:text-lg lg:leading-relaxed">
+              <p className="text-muted-foreground leading-relaxed lg:text-lg lg:leading-relaxed whitespace-pre-line">
                 {product.description}
               </p>
             )}
