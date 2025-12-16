@@ -61,7 +61,7 @@ export default function OffersPage() {
                 {/* Offer Badge */}
                 <div className="relative">
                   <img
-                    src={offer.image || '/placeholder.svg'}
+                    src={offer.images?.[0] || '/placeholder.svg'}
                     alt={offer.title}
                     className="w-full aspect-square object-cover group-hover:scale-105 transition-transform duration-300"
                   />

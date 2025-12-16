@@ -65,7 +65,7 @@ export interface Offer {
   id: string;
   title: string;
   description: string;
-  image: string;
+  images: string[];
   comboPrice: number;
   originalPrice?: number;
   stock: number;

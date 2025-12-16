@@ -15,6 +15,7 @@ export default function OfferDetailPage() {
   const [loading, setLoading] = useState(true);
   const [qty, setQty] = useState(1);
   const [selectedColor, setSelectedColor] = useState<string | undefined>();
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   useEffect(() => {
     const unsub = subscribeToOffers((offers) => {
@@ -86,17 +87,36 @@ export default function OfferDetailPage() {
         </Link>
 
         <div className="grid lg:grid-cols-2 gap-8">
-          {/* Image */}
-          <div className="relative">
-            <img
-              src={offer.image || '/placeholder.svg'}
-              alt={offer.title}
-              className="w-full aspect-square object-cover rounded-2xl"
-            />
-            <div className="absolute top-4 left-4 px-4 py-2 bg-accent text-accent-foreground font-bold rounded-full flex items-center gap-2">
-              <Gift className="w-4 h-4" />
-              SPECIAL OFFER
+          {/* Image Gallery */}
+          <div className="space-y-4">
+            <div className="relative aspect-square bg-card rounded-xl overflow-hidden border border-border">
+              <img
+                src={offer.images?.[currentImageIndex] || '/placeholder.svg'}
+                alt={offer.title}
+                className="w-full h-full object-contain"
+              />
+              <div className="absolute top-4 left-4 px-4 py-2 bg-accent text-accent-foreground font-bold rounded-full flex items-center gap-2">
+                <Gift className="w-4 h-4" />
+                SPECIAL OFFER
+              </div>
             </div>
+            {offer.images && offer.images.length > 1 && (
+              <div className="flex gap-2 justify-center">
+                {offer.images.map((img, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setCurrentImageIndex(idx)}
+                    className={`w-16 h-16 md:w-20 md:h-20 rounded-lg overflow-hidden border-2 transition-all ${
+                      idx === currentImageIndex
+                        ? 'border-accent'
+                        : 'border-border hover:border-accent/50'
+                    }`}
+                  >
+                    <img src={img} alt="" className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Details */}

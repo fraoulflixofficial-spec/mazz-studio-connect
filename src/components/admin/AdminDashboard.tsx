@@ -88,10 +88,18 @@ export function AdminDashboard() {
   // Offer Modal State
   const [offerModalOpen, setOfferModalOpen] = useState(false);
   const [editingOffer, setEditingOffer] = useState<Offer | null>(null);
-  const [offerForm, setOfferForm] = useState({
+  const [offerForm, setOfferForm] = useState<{
+    title: string;
+    description: string;
+    images: string[];
+    comboPrice: number;
+    originalPrice: number;
+    stock: number;
+    colors: string;
+  }>({
     title: '',
     description: '',
-    image: '',
+    images: ['', '', ''],
     comboPrice: 0,
     originalPrice: 0,
     stock: 0,
@@ -265,7 +273,7 @@ export function AdminDashboard() {
       setOfferForm({
         title: offer.title,
         description: offer.description,
-        image: offer.image,
+        images: [...offer.images, '', ''].slice(0, 3),
         comboPrice: offer.comboPrice,
         originalPrice: offer.originalPrice || 0,
         stock: offer.stock,
@@ -276,7 +284,7 @@ export function AdminDashboard() {
       setOfferForm({
         title: '',
         description: '',
-        image: '',
+        images: ['', '', ''],
         comboPrice: 0,
         originalPrice: 0,
         stock: 0,
@@ -291,7 +299,7 @@ export function AdminDashboard() {
     const data = {
       title: offerForm.title,
       description: offerForm.description,
-      image: offerForm.image,
+      images: offerForm.images.filter((img) => img.trim()),
       comboPrice: offerForm.comboPrice,
       originalPrice: offerForm.originalPrice,
       stock: offerForm.stock,
@@ -604,7 +612,7 @@ export function AdminDashboard() {
                     className="flex items-center gap-4 p-4 bg-card border border-border rounded-xl"
                   >
                     <img
-                      src={offer.image || '/placeholder.svg'}
+                      src={offer.images?.[0] || '/placeholder.svg'}
                       alt=""
                       className="w-16 h-16 object-cover rounded-lg"
                     />
@@ -881,14 +889,22 @@ export function AdminDashboard() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Image URL *</label>
-                <input
-                  type="url"
-                  value={offerForm.image}
-                  onChange={(e) => setOfferForm({ ...offerForm, image: e.target.value })}
-                  className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm"
-                  required
-                />
+                <label className="block text-sm font-medium mb-1">Image URLs (up to 3)</label>
+                {offerForm.images.map((img, idx) => (
+                  <input
+                    key={idx}
+                    type="url"
+                    value={img}
+                    onChange={(e) => {
+                      const newImages = [...offerForm.images];
+                      newImages[idx] = e.target.value;
+                      setOfferForm({ ...offerForm, images: newImages });
+                    }}
+                    placeholder={`Image ${idx + 1} URL${idx === 0 ? ' *' : ''}`}
+                    className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-accent/50"
+                    required={idx === 0}
+                  />
+                ))}
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
