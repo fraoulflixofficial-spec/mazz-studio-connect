@@ -11,6 +11,7 @@ export default function OfferCheckoutPage() {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
   const qty = parseInt(searchParams.get('qty') || '1', 10);
+  const selectedColor = searchParams.get('color') || undefined;
   const { toast } = useToast();
 
   const [offer, setOffer] = useState<Offer | null>(null);
@@ -59,6 +60,7 @@ export default function OfferCheckoutPage() {
     setSubmitting(true);
 
     try {
+      const colorInfo = selectedColor ? ` (${selectedColor})` : '';
       const newOrderId = await createOrder({
         customerName: formData.customerName,
         phone: formData.phone,
@@ -67,7 +69,7 @@ export default function OfferCheckoutPage() {
         items: [
           {
             productId: offer.id,
-            productName: `[OFFER] ${offer.title}`,
+            productName: `[OFFER] ${offer.title}${colorInfo}`,
             price: offer.comboPrice,
             qty,
           },
@@ -206,6 +208,9 @@ export default function OfferCheckoutPage() {
                     <span className="text-xs font-bold text-accent">SPECIAL OFFER</span>
                   </div>
                   <h3 className="font-medium line-clamp-2">{offer.title}</h3>
+                  {selectedColor && (
+                    <p className="text-sm text-muted-foreground">Color: {selectedColor}</p>
+                  )}
                   <p className="text-sm text-muted-foreground mt-1">Qty: {qty}</p>
                   <p className="text-accent font-semibold mt-1">
                     {formatPrice(offer.comboPrice)} × {qty}

@@ -95,6 +95,7 @@ export function AdminDashboard() {
     comboPrice: 0,
     originalPrice: 0,
     stock: 0,
+    colors: '',
   });
 
   useEffect(() => {
@@ -268,6 +269,7 @@ export function AdminDashboard() {
         comboPrice: offer.comboPrice,
         originalPrice: offer.originalPrice || 0,
         stock: offer.stock,
+        colors: offer.colors?.join(', ') || '',
       });
     } else {
       setEditingOffer(null);
@@ -278,6 +280,7 @@ export function AdminDashboard() {
         comboPrice: 0,
         originalPrice: 0,
         stock: 0,
+        colors: '',
       });
     }
     setOfferModalOpen(true);
@@ -293,6 +296,7 @@ export function AdminDashboard() {
       originalPrice: offerForm.originalPrice,
       stock: offerForm.stock,
       createdAt: editingOffer?.createdAt || Date.now(),
+      colors: offerForm.colors.split(',').map((c) => c.trim()).filter(Boolean),
     };
 
     try {
@@ -915,6 +919,16 @@ export function AdminDashboard() {
                   onChange={(e) => setOfferForm({ ...offerForm, stock: Number(e.target.value) })}
                   className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm"
                   required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Colors (comma separated)</label>
+                <input
+                  type="text"
+                  value={offerForm.colors}
+                  onChange={(e) => setOfferForm({ ...offerForm, colors: e.target.value })}
+                  placeholder="Black, White, Gold"
+                  className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/50"
                 />
               </div>
               <button
