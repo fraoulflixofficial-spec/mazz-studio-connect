@@ -70,6 +70,7 @@ export interface Offer {
   originalPrice?: number;
   stock: number;
   createdAt: number;
+  colors?: string[];
 }
 
 export interface OfferCartItem {

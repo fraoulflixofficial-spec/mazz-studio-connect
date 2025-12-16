@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Header } from '@/components/user/Header';
 import { Offer } from '@/types';
-import { subscribeToOffers, createOrder, decrementOfferStock } from '@/lib/database';
+import { subscribeToOffers } from '@/lib/database';
 import { formatPrice } from '@/lib/helpers';
-import { Gift, Minus, Plus, ShoppingCart, ArrowLeft } from 'lucide-react';
+import { Gift, Minus, Plus, ShoppingCart, ArrowLeft, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export default function OfferDetailPage() {
@@ -14,6 +14,7 @@ export default function OfferDetailPage() {
   const [offer, setOffer] = useState<Offer | null>(null);
   const [loading, setLoading] = useState(true);
   const [qty, setQty] = useState(1);
+  const [selectedColor, setSelectedColor] = useState<string | undefined>();
 
   useEffect(() => {
     const unsub = subscribeToOffers((offers) => {
@@ -24,10 +25,17 @@ export default function OfferDetailPage() {
     return unsub;
   }, [id]);
 
+  useEffect(() => {
+    if (offer?.colors?.length) {
+      setSelectedColor(offer.colors[0]);
+    }
+  }, [offer]);
+
   const handleOrderNow = () => {
     if (!offer) return;
-    // Navigate to offer checkout with offer data
-    navigate(`/offer-checkout/${offer.id}?qty=${qty}`);
+    // Navigate to offer checkout with offer data and selected color
+    const colorParam = selectedColor ? `&color=${encodeURIComponent(selectedColor)}` : '';
+    navigate(`/offer-checkout/${offer.id}?qty=${qty}${colorParam}`);
   };
 
   if (loading) {
@@ -135,6 +143,31 @@ export default function OfferDetailPage() {
                 </>
               )}
             </div>
+
+            {/* Color Selection */}
+            {offer.colors && offer.colors.length > 0 && (
+              <div>
+                <p className="text-sm font-medium mb-3">
+                  Color: <span className="text-accent">{selectedColor}</span>
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {offer.colors.map((color) => (
+                    <button
+                      key={color}
+                      onClick={() => setSelectedColor(color)}
+                      className={`px-4 py-2 rounded-lg border text-sm font-medium transition-all flex items-center gap-2 ${
+                        selectedColor === color
+                          ? 'border-accent bg-accent/10 text-accent'
+                          : 'border-border hover:border-accent/50'
+                      }`}
+                    >
+                      {selectedColor === color && <Check className="w-4 h-4" />}
+                      {color}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Quantity Selector */}
             <div className="flex items-center gap-4">
