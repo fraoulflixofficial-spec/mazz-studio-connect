@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Bot, X, Send, Loader2, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,7 +18,19 @@ interface Answers {
   otherRequirements: string;
 }
 
+interface AIRecommendation {
+  productName: string;
+  reason: string;
+}
+
+interface AIResponse {
+  greeting: string;
+  recommendations: AIRecommendation[];
+  note?: string;
+}
+
 export function AIAssistant() {
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
   const [step, setStep] = useState<Step>('idle');
@@ -28,7 +41,7 @@ export function AIAssistant() {
     otherRequirements: '',
   });
   const [inputValue, setInputValue] = useState('');
-  const [recommendation, setRecommendation] = useState('');
+  const [aiResponse, setAiResponse] = useState<AIResponse | null>(null);
   const [error, setError] = useState('');
   const [products, setProducts] = useState<Product[]>([]);
   const [hasInteracted, setHasInteracted] = useState(false);
@@ -75,7 +88,7 @@ export function AIAssistant() {
     setShowTooltip(false);
     setStep('category');
     setAnswers({ category: '', budget: '', color: '', otherRequirements: '' });
-    setRecommendation('');
+    setAiResponse(null);
     setError('');
   };
 
@@ -150,7 +163,7 @@ export function AIAssistant() {
       if (fnError) throw fnError;
       if (data?.error) throw new Error(data.error);
 
-      setRecommendation(data.recommendation);
+      setAiResponse(data.recommendation);
       setStep('result');
     } catch (err) {
       console.error('AI recommendation error:', err);
@@ -159,10 +172,28 @@ export function AIAssistant() {
     }
   };
 
+  const getMatchedProducts = (): Product[] => {
+    if (!aiResponse?.recommendations) return [];
+    
+    return aiResponse.recommendations
+      .map(rec => {
+        const matchedProduct = products.find(
+          p => p.name.toLowerCase() === rec.productName.toLowerCase()
+        );
+        return matchedProduct;
+      })
+      .filter((p): p is Product => p !== undefined);
+  };
+
+  const handleProductClick = (productId: string) => {
+    setIsOpen(false);
+    navigate(`/product/${productId}`);
+  };
+
   const resetChat = () => {
     setStep('category');
     setAnswers({ category: '', budget: '', color: '', otherRequirements: '' });
-    setRecommendation('');
+    setAiResponse(null);
     setError('');
     setInputValue('');
   };
@@ -275,22 +306,67 @@ export function AIAssistant() {
         );
 
       case 'result':
+        const matchedProducts = getMatchedProducts();
         return (
           <div className="space-y-4">
-            <div className="bg-accent/5 rounded-lg p-3 border border-accent/20">
-              <p className="text-xs text-muted-foreground mb-2">Your preferences:</p>
-              <div className="text-xs space-y-1">
-                <p><span className="font-medium">Category:</span> {answers.category}</p>
-                <p><span className="font-medium">Budget:</span> ৳{answers.budget}</p>
-                <p><span className="font-medium">Color:</span> {answers.color}</p>
-                {answers.otherRequirements && (
-                  <p><span className="font-medium">Other:</span> {answers.otherRequirements}</p>
-                )}
+            {/* AI Greeting */}
+            {aiResponse?.greeting && (
+              <p className="text-sm text-foreground">{aiResponse.greeting}</p>
+            )}
+
+            {/* Product Cards */}
+            {matchedProducts.length > 0 ? (
+              <div className="space-y-3">
+                <p className="text-xs text-muted-foreground font-medium">
+                  Recommended Products ({matchedProducts.length})
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  {matchedProducts.map((product) => {
+                    const recommendation = aiResponse?.recommendations.find(
+                      r => r.productName.toLowerCase() === product.name.toLowerCase()
+                    );
+                    return (
+                      <button
+                        key={product.id}
+                        onClick={() => handleProductClick(product.id)}
+                        className="bg-accent/5 hover:bg-accent/10 border border-border/50 hover:border-accent/50 rounded-lg p-2 transition-all text-left group"
+                      >
+                        <div className="aspect-square rounded-md overflow-hidden mb-2 bg-background">
+                          <img
+                            src={product.images[0]}
+                            alt={product.name}
+                            className="w-full h-full object-contain group-hover:scale-105 transition-transform"
+                          />
+                        </div>
+                        <p className="text-xs font-medium text-foreground line-clamp-2 mb-1">
+                          {product.name}
+                        </p>
+                        <p className="text-xs font-semibold text-accent">
+                          {formatPrice(product.price)}
+                        </p>
+                        {recommendation?.reason && (
+                          <p className="text-[10px] text-muted-foreground mt-1 line-clamp-2">
+                            {recommendation.reason}
+                          </p>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-            <div className="prose prose-sm max-w-none">
-              <p className="text-sm text-foreground whitespace-pre-wrap">{recommendation}</p>
-            </div>
+            ) : (
+              <div className="bg-accent/5 rounded-lg p-3 border border-accent/20">
+                <p className="text-sm text-foreground">
+                  {aiResponse?.note || "No exact matches found. Try adjusting your preferences."}
+                </p>
+              </div>
+            )}
+
+            {/* AI Note */}
+            {aiResponse?.note && matchedProducts.length > 0 && (
+              <p className="text-xs text-muted-foreground italic">{aiResponse.note}</p>
+            )}
+
             <Button onClick={resetChat} variant="outline" size="sm" className="w-full">
               <Sparkles className="w-4 h-4 mr-2" />
               Start New Search
@@ -350,7 +426,7 @@ export function AIAssistant() {
           </div>
 
           {/* Content */}
-          <div className="p-4 max-h-80 overflow-y-auto">
+          <div className="p-4 max-h-96 overflow-y-auto">
             {step === 'category' && (
               <div className="mb-4 bg-accent/5 rounded-lg p-3 border border-accent/20">
                 <p className="text-xs text-foreground">

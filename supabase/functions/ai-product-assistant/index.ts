@@ -22,14 +22,24 @@ serve(async (req) => {
 
 Your role is to recommend products based on user preferences. Be friendly, concise, and focus on helping users make confident purchase decisions.
 
+You MUST respond with valid JSON in this exact format:
+{
+  "greeting": "A short friendly greeting message",
+  "recommendations": [
+    {
+      "productName": "exact product name from the list",
+      "reason": "brief explanation why this is a good match (1-2 sentences)"
+    }
+  ],
+  "note": "optional note about alternatives or trade-offs if needed"
+}
+
 Guidelines:
 - Recommend only products that match the criteria as closely as possible
-- Highlight key benefits and value propositions
-- Keep responses clear and purchase-oriented
-- Use Bangladeshi Taka (৳) for all prices
-- If no exact match exists, suggest the closest alternatives and explain why
-- Maximum 3-4 product recommendations
-- Be encouraging but not pushy`;
+- Maximum 4 product recommendations
+- Use exact product names from the provided list
+- Keep reasons brief and purchase-oriented
+- If no exact match exists, suggest the closest alternatives`;
 
     const userPrompt = `A customer is looking for a product with these preferences:
 - Category: ${category}
@@ -37,16 +47,10 @@ Guidelines:
 - Preferred Color: ${color}
 ${otherRequirements ? `- Additional Requirements: ${otherRequirements}` : ''}
 
-Here are the available products in JSON format:
+Here are the available products:
 ${JSON.stringify(products, null, 2)}
 
-Please analyze these products and recommend the best matches. For each recommendation:
-1. State the product name
-2. Mention the price
-3. Explain why it's a good match
-4. Note any considerations
-
-If no products match well, suggest the closest alternatives and explain the trade-offs.`;
+Respond with valid JSON only. Match product names exactly as they appear in the list.`;
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
@@ -82,9 +86,28 @@ If no products match well, suggest the closest alternatives and explain the trad
     }
 
     const data = await response.json();
-    const recommendation = data.choices?.[0]?.message?.content || 'Unable to generate recommendations at this time.';
+    const content = data.choices?.[0]?.message?.content || '';
+    
+    // Parse the JSON response from AI
+    let aiResponse;
+    try {
+      // Remove markdown code blocks if present
+      const cleanContent = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      aiResponse = JSON.parse(cleanContent);
+    } catch (parseError) {
+      console.error('Failed to parse AI response:', content);
+      // Fallback response
+      aiResponse = {
+        greeting: "I found some options for you!",
+        recommendations: [],
+        note: content
+      };
+    }
 
-    return new Response(JSON.stringify({ recommendation }), {
+    return new Response(JSON.stringify({ 
+      recommendation: aiResponse,
+      success: true 
+    }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
