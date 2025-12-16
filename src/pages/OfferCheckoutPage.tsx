@@ -198,7 +198,7 @@ export default function OfferCheckoutPage() {
             <div className="bg-card border border-border rounded-xl overflow-hidden">
               <div className="flex gap-4 p-4">
                 <img
-                  src={offer.image || '/placeholder.svg'}
+                  src={offer.images?.[0] || '/placeholder.svg'}
                   alt={offer.title}
                   className="w-24 h-24 object-cover rounded-lg"
                 />
