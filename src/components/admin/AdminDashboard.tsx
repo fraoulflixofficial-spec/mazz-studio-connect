@@ -39,7 +39,9 @@ import {
   Gift,
   BarChart3,
   TrendingUp,
+  Download,
 } from 'lucide-react';
+import { exportOrderToPdf } from '@/lib/orderPdfExport';
 
 type Tab = 'products' | 'slider' | 'orders' | 'offers' | 'analysis' | 'sales';
 
@@ -576,7 +578,7 @@ export function AdminDashboard() {
                       </p>
                     )}
                   </div>
-                  <div className="p-4 bg-muted/30 flex gap-2 justify-end">
+                  <div className="p-4 bg-muted/30 flex gap-2 justify-end flex-wrap">
                     {order.status === 'placed' && (
                       <button
                         onClick={() => handleConfirmOrder(order.id)}
@@ -585,6 +587,12 @@ export function AdminDashboard() {
                         <Check className="w-4 h-4" /> Confirm
                       </button>
                     )}
+                    <button
+                      onClick={() => exportOrderToPdf(order)}
+                      className="flex items-center gap-2 px-3 py-2 bg-accent/10 text-accent rounded-lg text-sm hover:bg-accent/20 transition-colors"
+                    >
+                      <Download className="w-4 h-4" /> Export
+                    </button>
                     <button
                       onClick={() => handleDeleteOrder(order.id)}
                       className="flex items-center gap-2 px-3 py-2 bg-destructive/10 text-destructive rounded-lg text-sm hover:bg-destructive/20 transition-colors"
