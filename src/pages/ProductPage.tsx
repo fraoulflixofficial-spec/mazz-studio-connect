@@ -143,20 +143,28 @@ export default function ProductPage() {
               </div>
             )}
 
-            <div className="flex items-center gap-2">
-              {product.stock > 0 ? (
-                <>
-                  <span className="w-2 h-2 lg:w-3 lg:h-3 bg-green-500 rounded-full"></span>
-                  <span className="text-sm lg:text-base text-muted-foreground">
-                    {product.stock} in stock
-                  </span>
-                </>
-              ) : (
-                <>
-                  <span className="w-2 h-2 lg:w-3 lg:h-3 bg-destructive rounded-full"></span>
-                  <span className="text-sm lg:text-base text-destructive">Out of stock</span>
-                </>
-              )}
+            <div className="flex items-center gap-4 flex-wrap">
+              <div className="flex items-center gap-2">
+                {product.stock > 0 ? (
+                  <>
+                    <span className="w-2 h-2 lg:w-3 lg:h-3 bg-green-500 rounded-full"></span>
+                    <span className="text-sm lg:text-base text-muted-foreground">
+                      {product.stock} in stock
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span className="w-2 h-2 lg:w-3 lg:h-3 bg-destructive rounded-full"></span>
+                    <span className="text-sm lg:text-base text-destructive">Out of stock</span>
+                  </>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 lg:w-3 lg:h-3 bg-accent rounded-full"></span>
+                <span className="text-sm lg:text-base text-muted-foreground">
+                  {product.sold || 0} sold
+                </span>
+              </div>
             </div>
 
             {product.description && (
