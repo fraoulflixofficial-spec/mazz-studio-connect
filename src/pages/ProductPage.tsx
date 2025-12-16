@@ -24,6 +24,13 @@ export default function ProductPage() {
     return () => unsubscribe();
   }, []);
 
+  // Scroll to top when navigating to a new product
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    setCurrentImageIndex(0);
+    setQty(1);
+  }, [id]);
+
   const product = products.find((p) => p.id === id);
 
   useEffect(() => {
