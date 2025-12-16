@@ -32,7 +32,7 @@ export function HeroSlider() {
 
   if (items.length === 0) {
     return (
-      <div className="relative w-full aspect-[16/9] md:aspect-[21/9] overflow-hidden">
+      <div className="relative w-full aspect-[16/9] md:aspect-[21/9] lg:aspect-[3/1] xl:max-h-[500px] overflow-hidden">
         <img 
           src={heroPlaceholder} 
           alt="Mazzé Studio - Premium Audio & Tech" 
@@ -95,7 +95,7 @@ export function HeroSlider() {
   };
 
   return (
-    <div className="relative w-full aspect-[16/9] md:aspect-[21/9] overflow-hidden bg-primary">
+    <div className="relative w-full aspect-[16/9] md:aspect-[21/9] lg:aspect-[3/1] xl:max-h-[500px] overflow-hidden bg-primary">
       <div
         onClick={handleSlideClick}
         className={`absolute inset-0 ${currentItem.redirectUrl ? 'cursor-pointer' : ''}`}
