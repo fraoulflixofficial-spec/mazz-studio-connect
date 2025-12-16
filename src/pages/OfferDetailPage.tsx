@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import ReactMarkdown from 'react-markdown';
 import { Header } from '@/components/user/Header';
 import { Offer } from '@/types';
 import { subscribeToOffers } from '@/lib/database';
@@ -125,7 +126,9 @@ export default function OfferDetailPage() {
               <h1 className="text-2xl md:text-3xl lg:text-4xl font-display font-bold mb-3 lg:mb-4">
                 {offer.title}
               </h1>
-              <p className="text-muted-foreground lg:text-lg">{offer.description}</p>
+              <div className="text-muted-foreground lg:text-lg prose prose-invert prose-sm lg:prose-base max-w-none prose-ul:list-disc prose-ul:pl-5 prose-li:my-1 prose-p:my-2 prose-strong:text-foreground prose-em:text-accent">
+                <ReactMarkdown>{offer.description}</ReactMarkdown>
+              </div>
             </div>
 
             {/* Price */}
