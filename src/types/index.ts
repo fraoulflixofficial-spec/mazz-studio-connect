@@ -46,6 +46,8 @@ export interface OrderItem {
 
 export type OrderStatus = 'placed' | 'confirmed' | 'packed' | 'shipped' | 'out_for_delivery' | 'delivered';
 
+export type DeliveryZone = 'inside_dhaka' | 'outside_dhaka';
+
 export interface Order {
   id: string;
   customerName: string;
@@ -53,6 +55,9 @@ export interface Order {
   address: string;
   items: OrderItem[];
   total: number;
+  subtotal: number;
+  deliveryCharge: number;
+  deliveryZone: DeliveryZone;
   status: OrderStatus;
   createdAt: number;
   notes?: string;
