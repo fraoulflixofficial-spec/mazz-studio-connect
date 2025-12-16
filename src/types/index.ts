@@ -81,3 +81,46 @@ export interface OfferCartItem {
   qty: number;
 }
 
+// Analytics types
+export interface VisitorRecord {
+  visitorId: string;
+  timestamp: number;
+  date: string; // YYYY-MM-DD format
+}
+
+export interface ProductViewRecord {
+  productId: string;
+  visitorId: string;
+  timestamp: number;
+  date: string; // YYYY-MM-DD format
+}
+
+export interface AnalyticsData {
+  visitors: {
+    today: number;
+    lastWeek: number;
+    currentMonth: number;
+    lastMonth: number;
+  };
+  productViews: {
+    today: number;
+    lastWeek: number;
+    currentMonth: number;
+    lastMonth: number;
+  };
+  mostViewedProduct: string | null; // productId
+  sales: {
+    today: number;
+    lastWeek: number;
+    currentMonth: number;
+    lastMonth: number;
+  };
+  revenue: {
+    today: number;
+    lastWeek: number;
+    currentMonth: number;
+    lastMonth: number;
+  };
+  topSoldProducts: string[]; // productIds (top 5)
+}
+

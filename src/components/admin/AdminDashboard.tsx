@@ -20,6 +20,8 @@ import {
 } from '@/lib/database';
 import { formatPrice, isYouTubeUrl } from '@/lib/helpers';
 import { useToast } from '@/hooks/use-toast';
+import { AnalyticsSection } from './AnalyticsSection';
+import { SalesVolumeSection } from './SalesVolumeSection';
 import {
   LogOut,
   Package,
@@ -35,9 +37,11 @@ import {
   Clock,
   Truck,
   Gift,
+  BarChart3,
+  TrendingUp,
 } from 'lucide-react';
 
-type Tab = 'products' | 'slider' | 'orders' | 'offers';
+type Tab = 'products' | 'slider' | 'orders' | 'offers' | 'analysis' | 'sales';
 
 export function AdminDashboard() {
   const { logout, user } = useAuth();
@@ -386,6 +390,8 @@ export function AdminDashboard() {
             { id: 'slider', label: 'Slider', icon: Image },
             { id: 'orders', label: 'Orders', icon: ShoppingCart },
             { id: 'offers', label: 'Offer Box', icon: Gift },
+            { id: 'analysis', label: 'Analysis', icon: BarChart3 },
+            { id: 'sales', label: 'Sales Volume', icon: TrendingUp },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -666,6 +672,16 @@ export function AdminDashboard() {
               )}
             </div>
           </div>
+        )}
+
+        {/* Analysis Tab */}
+        {activeTab === 'analysis' && (
+          <AnalyticsSection products={products} />
+        )}
+
+        {/* Sales Volume Tab */}
+        {activeTab === 'sales' && (
+          <SalesVolumeSection products={products} orders={orders} />
         )}
       </div>
 
