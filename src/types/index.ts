@@ -11,6 +11,7 @@ export interface Product {
   description?: string;
   colors?: string[];
   productGroup?: string;
+  brand?: string;
 }
 
 export const FEATURED_CATEGORIES = [

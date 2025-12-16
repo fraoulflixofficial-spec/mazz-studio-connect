@@ -64,6 +64,7 @@ export function AdminDashboard() {
     description: string;
     colors: string;
     productGroup: string;
+    brand: string;
   }>({
     name: '',
     price: 0,
@@ -76,6 +77,7 @@ export function AdminDashboard() {
     description: '',
     colors: '',
     productGroup: '',
+    brand: '',
   });
 
   // Slider Modal State
@@ -142,6 +144,7 @@ export function AdminDashboard() {
         description: product.description || '',
         colors: product.colors?.join(', ') || '',
         productGroup: product.productGroup || '',
+        brand: product.brand || '',
       });
     } else {
       setEditingProduct(null);
@@ -157,6 +160,7 @@ export function AdminDashboard() {
         description: '',
         colors: '',
         productGroup: '',
+        brand: '',
       });
     }
     setProductModalOpen(true);
@@ -176,6 +180,7 @@ export function AdminDashboard() {
       description: productForm.description,
       colors: productForm.colors.split(',').map((c) => c.trim()).filter(Boolean),
       productGroup: productForm.productGroup.trim() || undefined,
+      brand: productForm.brand.trim() || undefined,
     };
 
     try {
@@ -738,6 +743,16 @@ export function AdminDashboard() {
                     <option key={cat} value={cat}>{cat}</option>
                   ))}
                 </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Brand Name</label>
+                <input
+                  type="text"
+                  value={productForm.brand}
+                  onChange={(e) => setProductForm({ ...productForm, brand: e.target.value })}
+                  placeholder="e.g., Apple, Samsung, Sony"
+                  className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/50"
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Menu Category</label>
