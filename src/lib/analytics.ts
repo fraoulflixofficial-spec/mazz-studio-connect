@@ -57,7 +57,7 @@ export const trackProductView = async (productId: string): Promise<void> => {
 };
 
 // Date utility functions
-export const getDateRanges = () => {
+export const getDateRanges = (periodStart?: string, periodEnd?: string) => {
   const now = new Date();
   const today = getDateString(now);
   
@@ -65,30 +65,53 @@ export const getDateRanges = () => {
   const lastWeekStart = new Date(now);
   lastWeekStart.setDate(lastWeekStart.getDate() - 7);
   
-  // Current month (1st of current month)
-  const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  // If period bounds are provided, use them for "current period" and calculate "last period"
+  if (periodStart && periodEnd) {
+    const periodStartDate = new Date(periodStart);
+    const periodEndDate = new Date(periodEnd);
+    const periodDays = Math.ceil((periodEndDate.getTime() - periodStartDate.getTime()) / (1000 * 60 * 60 * 24));
+    
+    // Last period is the same duration before the current period
+    const lastPeriodEnd = new Date(periodStartDate);
+    lastPeriodEnd.setDate(lastPeriodEnd.getDate() - 1);
+    const lastPeriodStart = new Date(lastPeriodEnd);
+    lastPeriodStart.setDate(lastPeriodStart.getDate() - periodDays + 1);
+    
+    return {
+      today,
+      lastWeekStart: getDateString(lastWeekStart),
+      currentPeriodStart: periodStart,
+      currentPeriodEnd: periodEnd,
+      lastPeriodStart: getDateString(lastPeriodStart),
+      lastPeriodEnd: getDateString(lastPeriodEnd),
+    };
+  }
   
-  // Last month
+  // Fallback to month-based calculation
+  const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
   const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
   
   return {
     today,
     lastWeekStart: getDateString(lastWeekStart),
-    currentMonthStart: getDateString(currentMonthStart),
-    lastMonthStart: getDateString(lastMonthStart),
-    lastMonthEnd: getDateString(lastMonthEnd),
+    currentPeriodStart: getDateString(currentMonthStart),
+    currentPeriodEnd: today,
+    lastPeriodStart: getDateString(lastMonthStart),
+    lastPeriodEnd: getDateString(lastMonthEnd),
   };
 };
 
-// Subscribe to visitor analytics
+// Subscribe to visitor analytics with period filtering
 export const subscribeToVisitorAnalytics = (
-  callback: (data: { today: number; lastWeek: number; currentMonth: number; lastMonth: number }) => void
+  callback: (data: { today: number; lastWeek: number; currentMonth: number; lastMonth: number }) => void,
+  periodStart?: string,
+  periodEnd?: string
 ) => {
   const visitorsRef = ref(database, 'analytics/visitors');
   
   return onValue(visitorsRef, (snapshot) => {
-    const ranges = getDateRanges();
+    const ranges = getDateRanges(periodStart, periodEnd);
     const data = { today: 0, lastWeek: 0, currentMonth: 0, lastMonth: 0 };
     
     if (!snapshot.exists()) {
@@ -99,11 +122,23 @@ export const subscribeToVisitorAnalytics = (
     const visitors = snapshot.val();
     const uniqueToday = new Set<string>();
     const uniqueLastWeek = new Set<string>();
-    const uniqueCurrentMonth = new Set<string>();
-    const uniqueLastMonth = new Set<string>();
+    const uniqueCurrentPeriod = new Set<string>();
+    const uniqueLastPeriod = new Set<string>();
     
     Object.values(visitors).forEach((v: any) => {
       const date = v.date;
+      
+      // Only count data within the collection period
+      if (periodStart && periodEnd) {
+        if (date < periodStart || date > periodEnd) {
+          // Skip data outside current period for current metrics
+          // But still check last period
+          if (date >= ranges.lastPeriodStart && date <= ranges.lastPeriodEnd) {
+            uniqueLastPeriod.add(v.visitorId);
+          }
+          return;
+        }
+      }
       
       if (date === ranges.today) {
         uniqueToday.add(v.visitorId);
@@ -111,24 +146,24 @@ export const subscribeToVisitorAnalytics = (
       if (date >= ranges.lastWeekStart && date <= ranges.today) {
         uniqueLastWeek.add(v.visitorId);
       }
-      if (date >= ranges.currentMonthStart && date <= ranges.today) {
-        uniqueCurrentMonth.add(v.visitorId);
+      if (date >= ranges.currentPeriodStart && date <= ranges.currentPeriodEnd) {
+        uniqueCurrentPeriod.add(v.visitorId);
       }
-      if (date >= ranges.lastMonthStart && date <= ranges.lastMonthEnd) {
-        uniqueLastMonth.add(v.visitorId);
+      if (date >= ranges.lastPeriodStart && date <= ranges.lastPeriodEnd) {
+        uniqueLastPeriod.add(v.visitorId);
       }
     });
     
     data.today = uniqueToday.size;
     data.lastWeek = uniqueLastWeek.size;
-    data.currentMonth = uniqueCurrentMonth.size;
-    data.lastMonth = uniqueLastMonth.size;
+    data.currentMonth = uniqueCurrentPeriod.size;
+    data.lastMonth = uniqueLastPeriod.size;
     
     callback(data);
   });
 };
 
-// Subscribe to product view analytics
+// Subscribe to product view analytics with period filtering
 export const subscribeToProductViewAnalytics = (
   callback: (data: { 
     today: number; 
@@ -137,12 +172,14 @@ export const subscribeToProductViewAnalytics = (
     lastMonth: number;
     mostViewedProductId: string | null;
     productViewCounts: Record<string, number>;
-  }) => void
+  }) => void,
+  periodStart?: string,
+  periodEnd?: string
 ) => {
   const viewsRef = ref(database, 'analytics/productViews');
   
   return onValue(viewsRef, (snapshot) => {
-    const ranges = getDateRanges();
+    const ranges = getDateRanges(periodStart, periodEnd);
     const data = { 
       today: 0, 
       lastWeek: 0, 
@@ -158,10 +195,22 @@ export const subscribeToProductViewAnalytics = (
     }
     
     const views = snapshot.val();
-    const currentMonthProductViews: Record<string, number> = {};
+    const currentPeriodProductViews: Record<string, number> = {};
     
     Object.values(views).forEach((v: any) => {
       const date = v.date;
+      
+      // Only count data within the collection period for current metrics
+      if (periodStart && periodEnd) {
+        if (date < periodStart || date > periodEnd) {
+          // Skip data outside current period for current metrics
+          // But still check last period
+          if (date >= ranges.lastPeriodStart && date <= ranges.lastPeriodEnd) {
+            data.lastMonth++;
+          }
+          return;
+        }
+      }
       
       if (date === ranges.today) {
         data.today++;
@@ -169,33 +218,33 @@ export const subscribeToProductViewAnalytics = (
       if (date >= ranges.lastWeekStart && date <= ranges.today) {
         data.lastWeek++;
       }
-      if (date >= ranges.currentMonthStart && date <= ranges.today) {
+      if (date >= ranges.currentPeriodStart && date <= ranges.currentPeriodEnd) {
         data.currentMonth++;
-        // Track per-product views for current month
-        currentMonthProductViews[v.productId] = (currentMonthProductViews[v.productId] || 0) + 1;
+        // Track per-product views for current period
+        currentPeriodProductViews[v.productId] = (currentPeriodProductViews[v.productId] || 0) + 1;
       }
-      if (date >= ranges.lastMonthStart && date <= ranges.lastMonthEnd) {
+      if (date >= ranges.lastPeriodStart && date <= ranges.lastPeriodEnd) {
         data.lastMonth++;
       }
     });
     
-    // Find most viewed product of current month
+    // Find most viewed product of current period
     let maxViews = 0;
-    Object.entries(currentMonthProductViews).forEach(([productId, count]) => {
+    Object.entries(currentPeriodProductViews).forEach(([productId, count]) => {
       if (count > maxViews) {
         maxViews = count;
         data.mostViewedProductId = productId;
       }
     });
     
-    data.productViewCounts = currentMonthProductViews;
+    data.productViewCounts = currentPeriodProductViews;
     callback(data);
   });
 };
 
-// Calculate sales analytics from orders
-export const calculateSalesAnalytics = (orders: Order[]) => {
-  const ranges = getDateRanges();
+// Calculate sales analytics from orders with period filtering
+export const calculateSalesAnalytics = (orders: Order[], periodStart?: string, periodEnd?: string) => {
+  const ranges = getDateRanges(periodStart, periodEnd);
   const data = {
     sales: { today: 0, lastWeek: 0, currentMonth: 0, lastMonth: 0 },
     revenue: { today: 0, lastWeek: 0, currentMonth: 0, lastMonth: 0 },
@@ -207,11 +256,24 @@ export const calculateSalesAnalytics = (orders: Order[]) => {
     o.status !== 'placed' // All statuses except 'placed' are valid
   );
   
-  const currentMonthProductSales: Record<string, number> = {};
+  const currentPeriodProductSales: Record<string, number> = {};
   
   validOrders.forEach((order) => {
     const orderDate = getDateString(new Date(order.createdAt));
     const totalQty = order.items.reduce((sum, item) => sum + item.qty, 0);
+    
+    // Only count data within the collection period for current metrics
+    if (periodStart && periodEnd) {
+      if (orderDate < periodStart || orderDate > periodEnd) {
+        // Skip data outside current period for current metrics
+        // But still check last period
+        if (orderDate >= ranges.lastPeriodStart && orderDate <= ranges.lastPeriodEnd) {
+          data.sales.lastMonth += totalQty;
+          data.revenue.lastMonth += order.total;
+        }
+        return;
+      }
+    }
     
     if (orderDate === ranges.today) {
       data.sales.today += totalQty;
@@ -221,22 +283,22 @@ export const calculateSalesAnalytics = (orders: Order[]) => {
       data.sales.lastWeek += totalQty;
       data.revenue.lastWeek += order.total;
     }
-    if (orderDate >= ranges.currentMonthStart && orderDate <= ranges.today) {
+    if (orderDate >= ranges.currentPeriodStart && orderDate <= ranges.currentPeriodEnd) {
       data.sales.currentMonth += totalQty;
       data.revenue.currentMonth += order.total;
-      // Track per-product sales for current month
+      // Track per-product sales for current period
       order.items.forEach((item) => {
-        currentMonthProductSales[item.productId] = (currentMonthProductSales[item.productId] || 0) + item.qty;
+        currentPeriodProductSales[item.productId] = (currentPeriodProductSales[item.productId] || 0) + item.qty;
       });
     }
-    if (orderDate >= ranges.lastMonthStart && orderDate <= ranges.lastMonthEnd) {
+    if (orderDate >= ranges.lastPeriodStart && orderDate <= ranges.lastPeriodEnd) {
       data.sales.lastMonth += totalQty;
       data.revenue.lastMonth += order.total;
     }
   });
   
-  // Get top 5 sold products of current month
-  data.topSoldProducts = Object.entries(currentMonthProductSales)
+  // Get top 5 sold products of current period
+  data.topSoldProducts = Object.entries(currentPeriodProductSales)
     .map(([productId, qty]) => ({ productId, qty }))
     .sort((a, b) => b.qty - a.qty)
     .slice(0, 5);

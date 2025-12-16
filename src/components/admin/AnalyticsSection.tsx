@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Product } from '@/types';
-import { subscribeToVisitorAnalytics, subscribeToProductViewAnalytics } from '@/lib/analytics';
+import { subscribeToVisitorAnalytics, subscribeToProductViewAnalytics, getDateString } from '@/lib/analytics';
 import { Users, Eye, TrendingUp, Award } from 'lucide-react';
+import { DataCollectionPeriod } from './DataCollectionPeriod';
 
 interface AnalyticsSectionProps {
   products: Product[];
@@ -34,11 +35,11 @@ const MetricCard = ({ title, today, lastWeek, currentMonth, lastMonth, icon }: M
         <p className="text-xl font-bold text-foreground">{lastWeek.toLocaleString()}</p>
       </div>
       <div className="bg-muted/50 rounded-lg p-3">
-        <p className="text-xs text-muted-foreground mb-1">This Month</p>
+        <p className="text-xs text-muted-foreground mb-1">This Period</p>
         <p className="text-xl font-bold text-foreground">{currentMonth.toLocaleString()}</p>
       </div>
       <div className="bg-muted/50 rounded-lg p-3">
-        <p className="text-xs text-muted-foreground mb-1">Last Month</p>
+        <p className="text-xs text-muted-foreground mb-1">Last Period</p>
         <p className="text-xl font-bold text-foreground">{lastMonth.toLocaleString()}</p>
       </div>
     </div>
@@ -46,6 +47,7 @@ const MetricCard = ({ title, today, lastWeek, currentMonth, lastMonth, icon }: M
 );
 
 export function AnalyticsSection({ products }: AnalyticsSectionProps) {
+  const [period, setPeriod] = useState<{ startDate: Date; endDate: Date } | null>(null);
   const [visitorData, setVisitorData] = useState({
     today: 0,
     lastWeek: 0,
@@ -62,14 +64,24 @@ export function AnalyticsSection({ products }: AnalyticsSectionProps) {
     productViewCounts: {} as Record<string, number>,
   });
 
+  const handlePeriodChange = useCallback((startDate: Date, endDate: Date) => {
+    setPeriod({ startDate, endDate });
+  }, []);
+
   useEffect(() => {
-    const unsub1 = subscribeToVisitorAnalytics(setVisitorData);
-    const unsub2 = subscribeToProductViewAnalytics(setProductViewData);
+    if (!period) return;
+    
+    const periodStart = getDateString(period.startDate);
+    const periodEnd = getDateString(period.endDate);
+    
+    const unsub1 = subscribeToVisitorAnalytics(setVisitorData, periodStart, periodEnd);
+    const unsub2 = subscribeToProductViewAnalytics(setProductViewData, periodStart, periodEnd);
+    
     return () => {
       unsub1();
       unsub2();
     };
-  }, []);
+  }, [period]);
 
   const mostViewedProduct = products.find(p => p.id === productViewData.mostViewedProductId);
 
@@ -79,6 +91,9 @@ export function AnalyticsSection({ products }: AnalyticsSectionProps) {
         <TrendingUp className="w-5 h-5 text-accent" />
         Analysis
       </h2>
+
+      {/* Data Collection Period with Countdown */}
+      <DataCollectionPeriod onPeriodChange={handlePeriodChange} />
       
       <div className="grid gap-4 md:grid-cols-2">
         <MetricCard
@@ -108,7 +123,7 @@ export function AnalyticsSection({ products }: AnalyticsSectionProps) {
           </div>
           <div>
             <h3 className="font-medium text-foreground">Most Viewed Product</h3>
-            <p className="text-xs text-muted-foreground">This Month</p>
+            <p className="text-xs text-muted-foreground">Current Period</p>
           </div>
         </div>
         
@@ -123,14 +138,14 @@ export function AnalyticsSection({ products }: AnalyticsSectionProps) {
               <h4 className="font-medium text-foreground truncate">{mostViewedProduct.name}</h4>
               <p className="text-sm text-accent">{mostViewedProduct.featuredCategory}</p>
               <p className="text-xs text-muted-foreground mt-1">
-                {productViewData.productViewCounts[mostViewedProduct.id] || 0} views this month
+                {productViewData.productViewCounts[mostViewedProduct.id] || 0} views this period
               </p>
             </div>
           </div>
         ) : (
           <div className="text-center py-8 text-muted-foreground">
             <Eye className="w-12 h-12 mx-auto mb-2 opacity-50" />
-            <p>No product views recorded yet this month</p>
+            <p>No product views recorded yet this period</p>
           </div>
         )}
       </div>
