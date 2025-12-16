@@ -270,10 +270,16 @@ export function AdminDashboard() {
   const openOfferModal = (offer?: Offer) => {
     if (offer) {
       setEditingOffer(offer);
+      // Handle backward compatibility: old offers may have 'image' string instead of 'images' array
+      const existingImages = Array.isArray(offer.images) 
+        ? offer.images 
+        : (offer as any).image 
+          ? [(offer as any).image] 
+          : [];
       setOfferForm({
         title: offer.title,
         description: offer.description,
-        images: [...offer.images, '', ''].slice(0, 3),
+        images: [...existingImages, '', '', ''].slice(0, 3),
         comboPrice: offer.comboPrice,
         originalPrice: offer.originalPrice || 0,
         stock: offer.stock,
