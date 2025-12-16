@@ -4,6 +4,7 @@ export interface Product {
   price: number;
   images: string[];
   stock: number;
+  sold?: number;
   menuCategory: string;
   featuredCategory: string;
   buttonText: string;
