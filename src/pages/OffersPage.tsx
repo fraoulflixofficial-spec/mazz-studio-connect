@@ -7,10 +7,14 @@ import { formatPrice } from '@/lib/helpers';
 import { Gift, ShoppingBag } from 'lucide-react';
 import { FloatingWhatsApp } from '@/components/user/FloatingWhatsApp';
 import { AIAssistant } from '@/components/user/AIAssistant';
+import { useVisitorTracking } from '@/hooks/useAnalyticsTracking';
 
 export default function OffersPage() {
   const [offers, setOffers] = useState<Offer[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Track visitor
+  useVisitorTracking();
 
   useEffect(() => {
     const unsub = subscribeToOffers((data) => {

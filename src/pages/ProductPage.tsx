@@ -11,6 +11,7 @@ import { FloatingWhatsApp } from '@/components/user/FloatingWhatsApp';
 import { AIAssistant } from '@/components/user/AIAssistant';
 import { ChevronLeft, Minus, Plus, ShoppingBag, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useVisitorTracking, useProductViewTracking } from '@/hooks/useAnalyticsTracking';
 
 export default function ProductPage() {
   const { id } = useParams<{ id: string }>();
@@ -21,6 +22,10 @@ export default function ProductPage() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [qty, setQty] = useState(1);
   const [selectedColor, setSelectedColor] = useState<string | undefined>();
+
+  // Track visitor and product view
+  useVisitorTracking();
+  useProductViewTracking(id);
 
   useEffect(() => {
     const unsubscribe = subscribeToProducts(setProducts);

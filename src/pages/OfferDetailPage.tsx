@@ -7,6 +7,7 @@ import { subscribeToOffers } from '@/lib/database';
 import { formatPrice } from '@/lib/helpers';
 import { Gift, Minus, Plus, ShoppingCart, ArrowLeft, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useVisitorTracking } from '@/hooks/useAnalyticsTracking';
 
 export default function OfferDetailPage() {
   const { id } = useParams();
@@ -17,6 +18,9 @@ export default function OfferDetailPage() {
   const [qty, setQty] = useState(1);
   const [selectedColor, setSelectedColor] = useState<string | undefined>();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  // Track visitor
+  useVisitorTracking();
 
   useEffect(() => {
     const unsub = subscribeToOffers((offers) => {

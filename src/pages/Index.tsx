@@ -11,11 +11,15 @@ import { AIAssistant } from '@/components/user/AIAssistant';
 import { AdminLogin } from '@/components/admin/AdminLogin';
 import { AdminDashboard } from '@/components/admin/AdminDashboard';
 import { useAuth } from '@/contexts/AuthContext';
+import { useVisitorTracking } from '@/hooks/useAnalyticsTracking';
 
 const Index = () => {
   const { user } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  
+  // Track visitor
+  useVisitorTracking();
 
   useEffect(() => {
     const unsubscribe = subscribeToProducts(setProducts);
