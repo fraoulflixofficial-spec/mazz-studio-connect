@@ -63,6 +63,7 @@ export function AdminDashboard() {
     buttonUrl: string;
     description: string;
     colors: string;
+    productGroup: string;
   }>({
     name: '',
     price: 0,
@@ -74,6 +75,7 @@ export function AdminDashboard() {
     buttonUrl: '',
     description: '',
     colors: '',
+    productGroup: '',
   });
 
   // Slider Modal State
@@ -139,6 +141,7 @@ export function AdminDashboard() {
         buttonUrl: product.buttonUrl,
         description: product.description || '',
         colors: product.colors?.join(', ') || '',
+        productGroup: product.productGroup || '',
       });
     } else {
       setEditingProduct(null);
@@ -153,6 +156,7 @@ export function AdminDashboard() {
         buttonUrl: '',
         description: '',
         colors: '',
+        productGroup: '',
       });
     }
     setProductModalOpen(true);
@@ -171,6 +175,7 @@ export function AdminDashboard() {
       buttonUrl: productForm.buttonUrl,
       description: productForm.description,
       colors: productForm.colors.split(',').map((c) => c.trim()).filter(Boolean),
+      productGroup: productForm.productGroup.trim() || undefined,
     };
 
     try {
@@ -743,6 +748,19 @@ export function AdminDashboard() {
                   placeholder="e.g., Audio, Wearables"
                   className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/50"
                 />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Product Group / Series Name</label>
+                <input
+                  type="text"
+                  value={productForm.productGroup}
+                  onChange={(e) => setProductForm({ ...productForm, productGroup: e.target.value })}
+                  placeholder="e.g., AirPods Gen 2, Galaxy Watch 5"
+                  className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/50"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Products with the same group name will appear in Related Products
+                </p>
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Description</label>

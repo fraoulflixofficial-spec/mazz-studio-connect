@@ -10,6 +10,7 @@ export interface Product {
   buttonUrl: string;
   description?: string;
   colors?: string[];
+  productGroup?: string;
 }
 
 export const FEATURED_CATEGORIES = [
