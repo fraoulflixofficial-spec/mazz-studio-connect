@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import ReactMarkdown from 'react-markdown';
 import { Product } from '@/types';
 import { subscribeToProducts } from '@/lib/database';
 import { formatPrice } from '@/lib/helpers';
@@ -159,9 +160,9 @@ export default function ProductPage() {
             </div>
 
             {product.description && (
-              <p className="text-muted-foreground leading-relaxed lg:text-lg lg:leading-relaxed whitespace-pre-line">
-                {product.description}
-              </p>
+              <div className="text-muted-foreground leading-relaxed lg:text-lg lg:leading-relaxed prose prose-invert prose-sm lg:prose-base max-w-none prose-ul:list-disc prose-ul:pl-5 prose-li:my-1 prose-p:my-2 prose-strong:text-foreground prose-em:text-accent">
+                <ReactMarkdown>{product.description}</ReactMarkdown>
+              </div>
             )}
 
             {product.colors && product.colors.length > 0 && (
