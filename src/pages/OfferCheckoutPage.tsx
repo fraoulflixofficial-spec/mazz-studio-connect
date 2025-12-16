@@ -1,43 +1,11 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { Header } from '@/components/user/Header';
 import { Offer } from '@/types';
 import { subscribeToOffers, createOrder, decrementOfferStock } from '@/lib/database';
 import { formatPrice } from '@/lib/helpers';
-import { MapPin, Phone, User, FileText, CheckCircle2, Copy, Package, Gift, MessageCircle } from 'lucide-react';
+import { MapPin, Phone, User, FileText, CheckCircle2, Copy, Package, Gift } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-
-// Store WhatsApp number
-const STORE_WHATSAPP = '8801995112279';
-
-interface OrderDetails {
-  orderId: string;
-  customerName: string;
-  phone: string;
-  address: string;
-  items: Array<{ productName: string; qty: number; price: number }>;
-  total: number;
-  date: string;
-}
-
-const generateWhatsAppMessage = (order: OrderDetails): string => {
-  const itemsList = order.items
-    .map((item) => `• ${item.productName} x${item.qty} - ৳${item.price * item.qty}`)
-    .join('\n');
-
-  return encodeURIComponent(
-    `✅ *Order Confirmation - Mazzé Studio*\n\n` +
-    `📦 *Order ID:* ${order.orderId}\n` +
-    `📅 *Date:* ${order.date}\n\n` +
-    `👤 *Customer:* ${order.customerName}\n` +
-    `📱 *Phone:* ${order.phone}\n` +
-    `📍 *Address:* ${order.address}\n\n` +
-    `🛒 *Order Items:*\n${itemsList}\n\n` +
-    `💰 *Total:* ৳${order.total}\n\n` +
-    `Track your order using Order ID: ${order.orderId}\n` +
-    `We will contact you soon! 🚚`
-  );
-};
 
 export default function OfferCheckoutPage() {
   const { id } = useParams();
@@ -45,7 +13,6 @@ export default function OfferCheckoutPage() {
   const qty = parseInt(searchParams.get('qty') || '1', 10);
   const selectedColor = searchParams.get('color') || undefined;
   const { toast } = useToast();
-  const whatsappOpened = useRef(false);
 
   const [offer, setOffer] = useState<Offer | null>(null);
   const [loading, setLoading] = useState(true);
@@ -58,7 +25,6 @@ export default function OfferCheckoutPage() {
   const [submitting, setSubmitting] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [orderId, setOrderId] = useState('');
-  const [orderDetails, setOrderDetails] = useState<OrderDetails | null>(null);
 
   useEffect(() => {
     const unsub = subscribeToOffers((offers) => {
@@ -75,13 +41,6 @@ export default function OfferCheckoutPage() {
       title: 'Copied!',
       description: 'Order ID copied to clipboard.',
     });
-  };
-
-  const handleSendWhatsApp = () => {
-    if (orderDetails) {
-      const whatsappUrl = `https://wa.me/${STORE_WHATSAPP}?text=${generateWhatsAppMessage(orderDetails)}`;
-      window.open(whatsappUrl, '_blank');
-    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -102,21 +61,19 @@ export default function OfferCheckoutPage() {
 
     try {
       const colorInfo = selectedColor ? ` (${selectedColor})` : '';
-      const orderItems = [
-        {
-          productId: offer.id,
-          productName: `[OFFER] ${offer.title}${colorInfo}`,
-          price: offer.comboPrice,
-          qty,
-        },
-      ];
-
       const newOrderId = await createOrder({
         customerName: formData.customerName,
         phone: formData.phone,
         address: formData.address,
         notes: formData.notes,
-        items: orderItems,
+        items: [
+          {
+            productId: offer.id,
+            productName: `[OFFER] ${offer.title}${colorInfo}`,
+            price: offer.comboPrice,
+            qty,
+          },
+        ],
         total: offer.comboPrice * qty,
         status: 'placed',
         createdAt: Date.now(),
@@ -124,36 +81,8 @@ export default function OfferCheckoutPage() {
 
       await decrementOfferStock(offer.id, qty);
 
-      // Store order details for WhatsApp message
-      const details: OrderDetails = {
-        orderId: newOrderId,
-        customerName: formData.customerName,
-        phone: formData.phone,
-        address: formData.address,
-        items: orderItems,
-        total: offer.comboPrice * qty,
-        date: new Date().toLocaleDateString('en-BD', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-        }),
-      };
-
       setOrderId(newOrderId);
-      setOrderDetails(details);
       setOrderPlaced(true);
-
-      // Auto-open WhatsApp with order details
-      const whatsappUrl = `https://wa.me/${STORE_WHATSAPP}?text=${generateWhatsAppMessage(details)}`;
-      window.open(whatsappUrl, '_blank');
-      whatsappOpened.current = true;
-
-      toast({
-        title: 'WhatsApp Opened',
-        description: 'Send the message to confirm your order via WhatsApp.',
-      });
     } catch (error) {
       toast({
         title: 'Error',
@@ -209,23 +138,6 @@ export default function OfferCheckoutPage() {
             <p className="text-muted-foreground mb-6">
               Thank you for your order. We will contact you soon.
             </p>
-
-            {/* WhatsApp Notification */}
-            <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-4 mb-6">
-              <p className="text-sm font-medium text-green-600 dark:text-green-400 mb-2">
-                📱 Order details sent via WhatsApp
-              </p>
-              <p className="text-xs text-muted-foreground mb-3">
-                Didn't see WhatsApp open? Click below to send your order details.
-              </p>
-              <button
-                onClick={handleSendWhatsApp}
-                className="flex items-center justify-center gap-2 w-full py-2.5 bg-green-500 text-white rounded-lg font-medium hover:bg-green-600 transition-colors"
-              >
-                <MessageCircle className="w-4 h-4" />
-                Send Order via WhatsApp
-              </button>
-            </div>
 
             {/* Order Tracking Code */}
             <div className="bg-muted/50 rounded-xl p-6 mb-6">
