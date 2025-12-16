@@ -75,19 +75,19 @@ export default function ProductPage() {
     <div className="min-h-screen bg-background">
       <Header />
 
-      <main className="container mx-auto px-4 py-6">
+      <main className="container mx-auto px-4 py-6 lg:py-12">
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center gap-1 text-muted-foreground hover:text-foreground mb-4 transition-colors"
+          className="flex items-center gap-1 text-muted-foreground hover:text-foreground mb-4 lg:mb-8 transition-colors"
         >
           <ChevronLeft className="w-4 h-4" />
           Back
         </button>
 
-        <div className="grid md:grid-cols-2 gap-6 md:gap-10">
+        <div className="grid md:grid-cols-2 gap-6 md:gap-10 lg:gap-16 max-w-6xl mx-auto">
           {/* Image Gallery */}
           <div className="space-y-4">
-            <div className="aspect-square bg-card rounded-xl overflow-hidden border border-border">
+            <div className="aspect-square bg-card rounded-xl overflow-hidden border border-border lg:rounded-2xl">
               <img
                 src={product.images[currentImageIndex] || '/placeholder.svg'}
                 alt={product.name}
@@ -95,12 +95,12 @@ export default function ProductPage() {
               />
             </div>
             {product.images.length > 1 && (
-              <div className="flex gap-2 justify-center">
+              <div className="flex gap-2 lg:gap-3 justify-center">
                 {product.images.map((img, idx) => (
                   <button
                     key={idx}
                     onClick={() => setCurrentImageIndex(idx)}
-                    className={`w-16 h-16 md:w-20 md:h-20 rounded-lg overflow-hidden border-2 transition-all ${
+                    className={`w-16 h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 rounded-lg lg:rounded-xl overflow-hidden border-2 transition-all ${
                       idx === currentImageIndex
                         ? 'border-accent'
                         : 'border-border hover:border-accent/50'
@@ -114,13 +114,13 @@ export default function ProductPage() {
           </div>
 
           {/* Product Info */}
-          <div className="space-y-6">
+          <div className="space-y-6 lg:space-y-8">
             <div>
-              <p className="text-sm text-accent mb-2">{product.featuredCategory}</p>
-              <h1 className="font-display text-2xl md:text-4xl text-foreground mb-3">
+              <p className="text-sm lg:text-base text-accent mb-2">{product.featuredCategory}</p>
+              <h1 className="font-display text-2xl md:text-4xl lg:text-5xl text-foreground mb-3 lg:mb-4">
                 {product.name}
               </h1>
-              <p className="text-3xl md:text-4xl font-bold text-accent">
+              <p className="text-3xl md:text-4xl lg:text-5xl font-bold text-accent">
                 {formatPrice(product.price)}
               </p>
             </div>
@@ -128,41 +128,41 @@ export default function ProductPage() {
             <div className="flex items-center gap-2">
               {product.stock > 0 ? (
                 <>
-                  <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                  <span className="text-sm text-muted-foreground">
+                  <span className="w-2 h-2 lg:w-3 lg:h-3 bg-green-500 rounded-full"></span>
+                  <span className="text-sm lg:text-base text-muted-foreground">
                     {product.stock} in stock
                   </span>
                 </>
               ) : (
                 <>
-                  <span className="w-2 h-2 bg-destructive rounded-full"></span>
-                  <span className="text-sm text-destructive">Out of stock</span>
+                  <span className="w-2 h-2 lg:w-3 lg:h-3 bg-destructive rounded-full"></span>
+                  <span className="text-sm lg:text-base text-destructive">Out of stock</span>
                 </>
               )}
             </div>
 
             {product.description && (
-              <p className="text-muted-foreground leading-relaxed">
+              <p className="text-muted-foreground leading-relaxed lg:text-lg lg:leading-relaxed">
                 {product.description}
               </p>
             )}
 
             {product.colors && product.colors.length > 0 && (
               <div>
-                <p className="text-sm font-medium mb-3">Color</p>
-                <div className="flex gap-2 flex-wrap">
+                <p className="text-sm lg:text-base font-medium mb-3">Color</p>
+                <div className="flex gap-2 lg:gap-3 flex-wrap">
                   {product.colors.map((color) => (
                     <button
                       key={color}
                       onClick={() => setSelectedColor(color)}
-                      className={`px-4 py-2 rounded-lg border text-sm transition-all ${
+                      className={`px-4 py-2 lg:px-5 lg:py-3 rounded-lg lg:rounded-xl border text-sm lg:text-base transition-all ${
                         selectedColor === color
                           ? 'border-accent bg-accent/10 text-accent'
                           : 'border-border hover:border-accent/50'
                       }`}
                     >
                       {color}
-                      {selectedColor === color && <Check className="w-3 h-3 inline ml-2" />}
+                      {selectedColor === color && <Check className="w-3 h-3 lg:w-4 lg:h-4 inline ml-2" />}
                     </button>
                   ))}
                 </div>
@@ -170,38 +170,38 @@ export default function ProductPage() {
             )}
 
             <div>
-              <p className="text-sm font-medium mb-3">Quantity</p>
-              <div className="flex items-center gap-3">
+              <p className="text-sm lg:text-base font-medium mb-3">Quantity</p>
+              <div className="flex items-center gap-3 lg:gap-4">
                 <button
                   onClick={() => setQty(Math.max(1, qty - 1))}
-                  className="w-10 h-10 rounded-lg border border-border flex items-center justify-center hover:bg-muted transition-colors"
+                  className="w-10 h-10 lg:w-12 lg:h-12 rounded-lg lg:rounded-xl border border-border flex items-center justify-center hover:bg-muted transition-colors"
                 >
-                  <Minus className="w-4 h-4" />
+                  <Minus className="w-4 h-4 lg:w-5 lg:h-5" />
                 </button>
-                <span className="w-12 text-center text-lg font-medium">{qty}</span>
+                <span className="w-12 lg:w-16 text-center text-lg lg:text-xl font-medium">{qty}</span>
                 <button
                   onClick={() => setQty(Math.min(product.stock, qty + 1))}
-                  className="w-10 h-10 rounded-lg border border-border flex items-center justify-center hover:bg-muted transition-colors"
+                  className="w-10 h-10 lg:w-12 lg:h-12 rounded-lg lg:rounded-xl border border-border flex items-center justify-center hover:bg-muted transition-colors"
                 >
-                  <Plus className="w-4 h-4" />
+                  <Plus className="w-4 h-4 lg:w-5 lg:h-5" />
                 </button>
               </div>
             </div>
 
-            <div className="flex gap-3 pt-4">
+            <div className="flex gap-3 lg:gap-4 pt-4 lg:pt-6">
               <button
                 onClick={handleAddToCart}
                 disabled={product.stock <= 0}
-                className="flex-1 py-3 px-6 border-2 border-accent text-accent rounded-lg font-medium hover:bg-accent/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 py-3 lg:py-4 px-6 border-2 border-accent text-accent rounded-lg lg:rounded-xl font-medium lg:text-lg hover:bg-accent/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Add to Cart
               </button>
               <button
                 onClick={handleOrderNow}
                 disabled={product.stock <= 0}
-                className="flex-1 py-3 px-6 bg-accent text-accent-foreground rounded-lg font-medium hover:bg-accent/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 py-3 lg:py-4 px-6 bg-accent text-accent-foreground rounded-lg lg:rounded-xl font-medium lg:text-lg hover:bg-accent/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <ShoppingBag className="w-5 h-5" />
+                <ShoppingBag className="w-5 h-5 lg:w-6 lg:h-6" />
                 Order Now
               </button>
             </div>

@@ -76,20 +76,20 @@ export default function OfferDetailPage() {
     <div className="min-h-screen bg-background">
       <Header />
 
-      <main className="container mx-auto px-4 py-6">
+      <main className="container mx-auto px-4 py-6 lg:py-12">
         {/* Back Button */}
         <Link
           to="/offers"
-          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6"
+          className="inline-flex items-center gap-2 text-sm lg:text-base text-muted-foreground hover:text-foreground mb-6 lg:mb-8"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Offers
         </Link>
 
-        <div className="grid lg:grid-cols-2 gap-8">
+        <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 max-w-6xl mx-auto">
           {/* Image Gallery */}
           <div className="space-y-4">
-            <div className="relative aspect-square bg-card rounded-xl overflow-hidden border border-border">
+            <div className="relative aspect-square bg-card rounded-xl lg:rounded-2xl overflow-hidden border border-border">
               <img
                 src={offer.images?.[currentImageIndex] || '/placeholder.svg'}
                 alt={offer.title}
@@ -101,12 +101,12 @@ export default function OfferDetailPage() {
               </div>
             </div>
             {offer.images && offer.images.length > 1 && (
-              <div className="flex gap-2 justify-center">
+              <div className="flex gap-2 lg:gap-3 justify-center">
                 {offer.images.map((img, idx) => (
                   <button
                     key={idx}
                     onClick={() => setCurrentImageIndex(idx)}
-                    className={`w-16 h-16 md:w-20 md:h-20 rounded-lg overflow-hidden border-2 transition-all ${
+                    className={`w-16 h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 rounded-lg lg:rounded-xl overflow-hidden border-2 transition-all ${
                       idx === currentImageIndex
                         ? 'border-accent'
                         : 'border-border hover:border-accent/50'
@@ -120,28 +120,28 @@ export default function OfferDetailPage() {
           </div>
 
           {/* Details */}
-          <div className="space-y-6">
+          <div className="space-y-6 lg:space-y-8">
             <div>
-              <h1 className="text-2xl md:text-3xl font-display font-bold mb-3">
+              <h1 className="text-2xl md:text-3xl lg:text-4xl font-display font-bold mb-3 lg:mb-4">
                 {offer.title}
               </h1>
-              <p className="text-muted-foreground">{offer.description}</p>
+              <p className="text-muted-foreground lg:text-lg">{offer.description}</p>
             </div>
 
             {/* Price */}
-            <div className="bg-card border border-border rounded-xl p-4">
+            <div className="bg-card border border-border rounded-xl lg:rounded-2xl p-4 lg:p-6">
               <div className="flex items-baseline gap-3 mb-2">
-                <span className="text-3xl font-bold text-accent">
+                <span className="text-3xl lg:text-4xl font-bold text-accent">
                   {formatPrice(offer.comboPrice)}
                 </span>
                 {offer.originalPrice && offer.originalPrice > offer.comboPrice && (
-                  <span className="text-lg text-muted-foreground line-through">
+                  <span className="text-lg lg:text-xl text-muted-foreground line-through">
                     {formatPrice(offer.originalPrice)}
                   </span>
                 )}
               </div>
               {savings > 0 && (
-                <p className="text-sm text-green-500 font-medium">
+                <p className="text-sm lg:text-base text-green-500 font-medium">
                   You save {formatPrice(savings)}!
                 </p>
               )}
@@ -151,15 +151,15 @@ export default function OfferDetailPage() {
             <div className="flex items-center gap-2">
               {offer.stock > 0 ? (
                 <>
-                  <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                  <span className="text-sm text-green-500">
+                  <span className="w-2 h-2 lg:w-3 lg:h-3 bg-green-500 rounded-full animate-pulse" />
+                  <span className="text-sm lg:text-base text-green-500">
                     In Stock ({offer.stock} available)
                   </span>
                 </>
               ) : (
                 <>
-                  <span className="w-2 h-2 bg-destructive rounded-full" />
-                  <span className="text-sm text-destructive">Out of Stock</span>
+                  <span className="w-2 h-2 lg:w-3 lg:h-3 bg-destructive rounded-full" />
+                  <span className="text-sm lg:text-base text-destructive">Out of Stock</span>
                 </>
               )}
             </div>
@@ -167,15 +167,15 @@ export default function OfferDetailPage() {
             {/* Color Selection */}
             {offer.colors && offer.colors.length > 0 && (
               <div>
-                <p className="text-sm font-medium mb-3">
+                <p className="text-sm lg:text-base font-medium mb-3">
                   Color: <span className="text-accent">{selectedColor}</span>
                 </p>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2 lg:gap-3">
                   {offer.colors.map((color) => (
                     <button
                       key={color}
                       onClick={() => setSelectedColor(color)}
-                      className={`px-4 py-2 rounded-lg border text-sm font-medium transition-all flex items-center gap-2 ${
+                      className={`px-4 py-2 lg:px-5 lg:py-3 rounded-lg lg:rounded-xl border text-sm lg:text-base font-medium transition-all flex items-center gap-2 ${
                         selectedColor === color
                           ? 'border-accent bg-accent/10 text-accent'
                           : 'border-border hover:border-accent/50'
@@ -191,31 +191,31 @@ export default function OfferDetailPage() {
 
             {/* Quantity Selector */}
             <div className="flex items-center gap-4">
-              <span className="text-sm font-medium">Quantity:</span>
-              <div className="flex items-center border border-border rounded-lg">
+              <span className="text-sm lg:text-base font-medium">Quantity:</span>
+              <div className="flex items-center border border-border rounded-lg lg:rounded-xl">
                 <button
                   onClick={() => setQty(Math.max(1, qty - 1))}
-                  className="p-3 hover:bg-muted transition-colors"
+                  className="p-3 lg:p-4 hover:bg-muted transition-colors"
                   disabled={qty <= 1}
                 >
-                  <Minus className="w-4 h-4" />
+                  <Minus className="w-4 h-4 lg:w-5 lg:h-5" />
                 </button>
-                <span className="w-12 text-center font-medium">{qty}</span>
+                <span className="w-12 lg:w-16 text-center font-medium lg:text-lg">{qty}</span>
                 <button
                   onClick={() => setQty(Math.min(offer.stock, qty + 1))}
-                  className="p-3 hover:bg-muted transition-colors"
+                  className="p-3 lg:p-4 hover:bg-muted transition-colors"
                   disabled={qty >= offer.stock}
                 >
-                  <Plus className="w-4 h-4" />
+                  <Plus className="w-4 h-4 lg:w-5 lg:h-5" />
                 </button>
               </div>
             </div>
 
             {/* Total */}
-            <div className="bg-muted/50 rounded-xl p-4">
+            <div className="bg-muted/50 rounded-xl lg:rounded-2xl p-4 lg:p-6">
               <div className="flex justify-between items-center">
-                <span className="font-medium">Total:</span>
-                <span className="text-2xl font-bold text-accent">
+                <span className="font-medium lg:text-lg">Total:</span>
+                <span className="text-2xl lg:text-3xl font-bold text-accent">
                   {formatPrice(offer.comboPrice * qty)}
                 </span>
               </div>
@@ -225,9 +225,9 @@ export default function OfferDetailPage() {
             <button
               onClick={handleOrderNow}
               disabled={offer.stock <= 0}
-              className="w-full py-4 bg-accent text-accent-foreground rounded-xl font-semibold text-lg hover:bg-accent/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full py-4 lg:py-5 bg-accent text-accent-foreground rounded-xl lg:rounded-2xl font-semibold text-lg lg:text-xl hover:bg-accent/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              <ShoppingCart className="w-5 h-5" />
+              <ShoppingCart className="w-5 h-5 lg:w-6 lg:h-6" />
               Order Now
             </button>
           </div>
