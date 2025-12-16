@@ -634,7 +634,9 @@ export function AdminDashboard() {
                     />
                     <div className="flex-1 min-w-0">
                       <h3 className="font-medium truncate">{offer.title}</h3>
-                      <p className="text-sm text-muted-foreground truncate">{offer.description}</p>
+                      <p className="text-sm text-muted-foreground truncate">
+                        {offer.description?.replace(/[*_#`\[\]]/g, '').substring(0, 60)}{offer.description && offer.description.length > 60 ? '...' : ''}
+                      </p>
                       <p className="text-sm text-accent font-semibold">
                         {formatPrice(offer.comboPrice)}
                         {offer.originalPrice && offer.originalPrice > offer.comboPrice && (
