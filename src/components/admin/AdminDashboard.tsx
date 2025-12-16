@@ -22,6 +22,7 @@ import { formatPrice, isYouTubeUrl } from '@/lib/helpers';
 import { useToast } from '@/hooks/use-toast';
 import { AnalyticsSection } from './AnalyticsSection';
 import { SalesVolumeSection } from './SalesVolumeSection';
+import { OrdersFilterSection, OrderFilters } from './OrdersFilterSection';
 import {
   LogOut,
   Package,
@@ -54,6 +55,13 @@ export function AdminDashboard() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [offers, setOffers] = useState<Offer[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [orderFilters, setOrderFilters] = useState<OrderFilters>({
+    orderId: '',
+    productName: '',
+    customerName: '',
+    customerNumber: '',
+    dateOfPurchase: '',
+  });
 
   // Product Modal State
   const [productModalOpen, setProductModalOpen] = useState(false);
@@ -361,7 +369,36 @@ export function AdminDashboard() {
     o.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const sortedOrders = [...orders].sort((a, b) => b.createdAt - a.createdAt);
+  // Filter and sort orders
+  const filteredOrders = orders.filter((order) => {
+    // Order ID filter
+    if (orderFilters.orderId && !order.id.toLowerCase().includes(orderFilters.orderId.toLowerCase())) {
+      return false;
+    }
+    // Product Name filter
+    if (orderFilters.productName) {
+      const hasMatchingProduct = order.items.some((item) =>
+        item.productName.toLowerCase().includes(orderFilters.productName.toLowerCase())
+      );
+      if (!hasMatchingProduct) return false;
+    }
+    // Customer Name filter
+    if (orderFilters.customerName && !order.customerName.toLowerCase().includes(orderFilters.customerName.toLowerCase())) {
+      return false;
+    }
+    // Customer Number filter
+    if (orderFilters.customerNumber && !order.phone.includes(orderFilters.customerNumber)) {
+      return false;
+    }
+    // Date of Purchase filter
+    if (orderFilters.dateOfPurchase) {
+      const orderDate = new Date(order.createdAt).toISOString().split('T')[0];
+      if (orderDate !== orderFilters.dateOfPurchase) return false;
+    }
+    return true;
+  });
+
+  const sortedOrders = [...filteredOrders].sort((a, b) => b.createdAt - a.createdAt);
 
   return (
     <div className="min-h-screen bg-background">
@@ -534,7 +571,10 @@ export function AdminDashboard() {
 
         {/* Orders Tab */}
         {activeTab === 'orders' && (
-          <div className="grid gap-4">
+          <div className="space-y-4">
+            <OrdersFilterSection onFiltersChange={setOrderFilters} />
+            
+            <div className="grid gap-4">
             {sortedOrders.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground">No orders yet</div>
             ) : (
@@ -603,6 +643,7 @@ export function AdminDashboard() {
                 </div>
               ))
             )}
+            </div>
           </div>
         )}
 
