@@ -2,8 +2,6 @@ import { jsPDF } from 'jspdf';
 import { Order } from '@/types';
 import { formatPrice } from '@/lib/helpers';
 
-const DELIVERY_CHARGE = 120; // Fixed delivery charge in BDT
-
 export function exportOrderToPdf(order: Order) {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -84,7 +82,13 @@ export function exportOrderToPdf(order: Order) {
   const addressLines = doc.splitTextToSize(order.address, pageWidth - 80);
   doc.setFontSize(11);
   doc.text(addressLines, leftMargin + 35, yPos);
-  yPos += (addressLines.length * 5) + 10;
+  yPos += (addressLines.length * 5) + 5;
+  
+  // Delivery Zone
+  const deliveryZoneLabel = order.deliveryZone === 'inside_dhaka' ? 'Inside Dhaka' : 'Outside Dhaka';
+  addText('Delivery:', leftMargin, yPos, { fontSize: 10, color: [100, 100, 100] });
+  addText(deliveryZoneLabel, leftMargin + 35, yPos, { fontSize: 11 });
+  yPos += 10;
 
   // Order Items
   addText('Order Items', leftMargin, yPos, { fontSize: 14, fontStyle: 'bold' });
@@ -122,15 +126,18 @@ export function exportOrderToPdf(order: Order) {
 
   yPos += 5;
 
-  // Order Summary
+  // Order Summary - Use order's subtotal and deliveryCharge if available, otherwise calculate
+  const orderSubtotal = order.subtotal ?? subtotal;
+  const orderDeliveryCharge = order.deliveryCharge ?? 0;
+  
   doc.setFillColor(250, 250, 250);
   doc.roundedRect(pageWidth - 100, yPos, 80, 45, 3, 3, 'F');
 
   addText('Subtotal:', pageWidth - 95, yPos + 10, { fontSize: 10, color: [100, 100, 100] });
-  addText(formatPrice(subtotal), rightMargin - 5, yPos + 10, { fontSize: 10, align: 'right' });
+  addText(formatPrice(orderSubtotal), rightMargin - 5, yPos + 10, { fontSize: 10, align: 'right' });
 
   addText('Delivery:', pageWidth - 95, yPos + 20, { fontSize: 10, color: [100, 100, 100] });
-  addText(formatPrice(DELIVERY_CHARGE), rightMargin - 5, yPos + 20, { fontSize: 10, align: 'right' });
+  addText(formatPrice(orderDeliveryCharge), rightMargin - 5, yPos + 20, { fontSize: 10, align: 'right' });
 
   doc.setDrawColor(180, 180, 180);
   doc.line(pageWidth - 95, yPos + 26, rightMargin - 5, yPos + 26);

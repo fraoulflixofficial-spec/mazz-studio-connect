@@ -4,8 +4,14 @@ import { Header } from '@/components/user/Header';
 import { Offer } from '@/types';
 import { subscribeToOffers, createOrder, decrementOfferStock } from '@/lib/database';
 import { formatPrice } from '@/lib/helpers';
-import { MapPin, Phone, User, FileText, CheckCircle2, Copy, Package, Gift } from 'lucide-react';
+import { MapPin, Phone, User, FileText, CheckCircle2, Copy, Package, Gift, Truck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { DeliveryZone } from '@/types';
+
+const DELIVERY_CHARGES = {
+  inside_dhaka: 80,
+  outside_dhaka: 100,
+};
 
 export default function OfferCheckoutPage() {
   const { id } = useParams();
@@ -22,6 +28,7 @@ export default function OfferCheckoutPage() {
     address: '',
     notes: '',
   });
+  const [deliveryZone, setDeliveryZone] = useState<DeliveryZone>('inside_dhaka');
   const [submitting, setSubmitting] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [orderId, setOrderId] = useState('');
@@ -61,6 +68,8 @@ export default function OfferCheckoutPage() {
 
     try {
       const colorInfo = selectedColor ? ` (${selectedColor})` : '';
+      const subtotal = offer.comboPrice * qty;
+      const deliveryCharge = DELIVERY_CHARGES[deliveryZone];
       const newOrderId = await createOrder({
         customerName: formData.customerName,
         phone: formData.phone,
@@ -74,7 +83,10 @@ export default function OfferCheckoutPage() {
             qty,
           },
         ],
-        total: offer.comboPrice * qty,
+        subtotal,
+        deliveryCharge,
+        deliveryZone,
+        total: subtotal + deliveryCharge,
         status: 'placed',
         createdAt: Date.now(),
       });
@@ -180,7 +192,9 @@ export default function OfferCheckoutPage() {
     );
   }
 
-  const total = offer.comboPrice * qty;
+  const subtotal = offer.comboPrice * qty;
+  const deliveryCharge = DELIVERY_CHARGES[deliveryZone];
+  const grandTotal = subtotal + deliveryCharge;
 
   return (
     <div className="min-h-screen bg-background">
@@ -217,10 +231,18 @@ export default function OfferCheckoutPage() {
                   </p>
                 </div>
               </div>
-              <div className="p-4 bg-muted/50">
-                <div className="flex justify-between text-lg font-semibold">
+              <div className="p-4 bg-muted/50 space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Subtotal</span>
+                  <span>{formatPrice(subtotal)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Delivery</span>
+                  <span>{formatPrice(deliveryCharge)}</span>
+                </div>
+                <div className="flex justify-between text-lg font-semibold pt-2 border-t border-border">
                   <span>Total</span>
-                  <span className="text-accent">{formatPrice(total)}</span>
+                  <span className="text-accent">{formatPrice(grandTotal)}</span>
                 </div>
               </div>
             </div>
@@ -291,6 +313,40 @@ export default function OfferCheckoutPage() {
               </div>
             </div>
 
+            {/* Delivery Zone Selection */}
+            <div className="bg-card border border-border rounded-xl p-4 space-y-3">
+              <label className="flex items-center gap-2 text-sm font-medium">
+                <Truck className="w-4 h-4" />
+                Delivery Zone *
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setDeliveryZone('inside_dhaka')}
+                  className={`p-3 rounded-lg border-2 text-center transition-all ${
+                    deliveryZone === 'inside_dhaka'
+                      ? 'border-accent bg-accent/10'
+                      : 'border-border hover:border-accent/50'
+                  }`}
+                >
+                  <p className="font-medium text-sm">Inside Dhaka</p>
+                  <p className="text-accent font-semibold">{formatPrice(80)}</p>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDeliveryZone('outside_dhaka')}
+                  className={`p-3 rounded-lg border-2 text-center transition-all ${
+                    deliveryZone === 'outside_dhaka'
+                      ? 'border-accent bg-accent/10'
+                      : 'border-border hover:border-accent/50'
+                  }`}
+                >
+                  <p className="font-medium text-sm">Outside Dhaka</p>
+                  <p className="text-accent font-semibold">{formatPrice(100)}</p>
+                </button>
+              </div>
+            </div>
+
             <div className="bg-accent/10 border border-accent/20 rounded-xl p-4">
               <p className="text-sm font-medium text-accent">💵 Cash on Delivery (COD)</p>
               <p className="text-xs text-muted-foreground mt-1">
@@ -303,7 +359,7 @@ export default function OfferCheckoutPage() {
               disabled={submitting}
               className="w-full py-4 bg-accent text-accent-foreground rounded-xl font-semibold text-lg hover:bg-accent/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {submitting ? 'Placing Order...' : `Place Order (COD) • ${formatPrice(total)}`}
+              {submitting ? 'Placing Order...' : `Place Order (COD) • ${formatPrice(grandTotal)}`}
             </button>
           </form>
         </div>

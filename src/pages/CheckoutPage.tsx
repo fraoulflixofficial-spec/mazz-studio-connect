@@ -4,8 +4,14 @@ import { Header } from '@/components/user/Header';
 import { useCart } from '@/contexts/CartContext';
 import { formatPrice } from '@/lib/helpers';
 import { createOrder, decrementStock } from '@/lib/database';
-import { Trash2, Minus, Plus, MapPin, Phone, User, FileText, CheckCircle2, Copy, Package } from 'lucide-react';
+import { Trash2, Minus, Plus, MapPin, Phone, User, FileText, CheckCircle2, Copy, Package, Truck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { DeliveryZone } from '@/types';
+
+const DELIVERY_CHARGES = {
+  inside_dhaka: 80,
+  outside_dhaka: 100,
+};
 
 export default function CheckoutPage() {
   const { items, updateQuantity, removeFromCart, clearCart, total } = useCart();
@@ -17,9 +23,13 @@ export default function CheckoutPage() {
     address: '',
     notes: '',
   });
+  const [deliveryZone, setDeliveryZone] = useState<DeliveryZone>('inside_dhaka');
   const [loading, setLoading] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [orderId, setOrderId] = useState('');
+
+  const deliveryCharge = DELIVERY_CHARGES[deliveryZone];
+  const grandTotal = total + deliveryCharge;
 
   const handleCopyOrderId = () => {
     navigator.clipboard.writeText(orderId);
@@ -65,7 +75,10 @@ export default function CheckoutPage() {
           price: item.product.price,
           qty: item.qty,
         })),
-        total,
+        subtotal: total,
+        deliveryCharge,
+        deliveryZone,
+        total: grandTotal,
         status: 'placed',
         createdAt: Date.now(),
       });
@@ -207,10 +220,18 @@ export default function CheckoutPage() {
                     </div>
                   </div>
                 ))}
-                <div className="p-4 bg-muted/50">
-                  <div className="flex justify-between text-lg font-semibold">
+                <div className="p-4 bg-muted/50 space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Subtotal</span>
+                    <span>{formatPrice(total)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Delivery</span>
+                    <span>{formatPrice(deliveryCharge)}</span>
+                  </div>
+                  <div className="flex justify-between text-lg font-semibold pt-2 border-t border-border">
                     <span>Total</span>
-                    <span className="text-accent">{formatPrice(total)}</span>
+                    <span className="text-accent">{formatPrice(grandTotal)}</span>
                   </div>
                 </div>
               </div>
@@ -282,6 +303,40 @@ export default function CheckoutPage() {
               </div>
             </div>
 
+            {/* Delivery Zone Selection */}
+            <div className="bg-card border border-border rounded-xl p-4 space-y-3">
+              <label className="flex items-center gap-2 text-sm font-medium">
+                <Truck className="w-4 h-4" />
+                Delivery Zone *
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setDeliveryZone('inside_dhaka')}
+                  className={`p-3 rounded-lg border-2 text-center transition-all ${
+                    deliveryZone === 'inside_dhaka'
+                      ? 'border-accent bg-accent/10'
+                      : 'border-border hover:border-accent/50'
+                  }`}
+                >
+                  <p className="font-medium text-sm">Inside Dhaka</p>
+                  <p className="text-accent font-semibold">{formatPrice(80)}</p>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDeliveryZone('outside_dhaka')}
+                  className={`p-3 rounded-lg border-2 text-center transition-all ${
+                    deliveryZone === 'outside_dhaka'
+                      ? 'border-accent bg-accent/10'
+                      : 'border-border hover:border-accent/50'
+                  }`}
+                >
+                  <p className="font-medium text-sm">Outside Dhaka</p>
+                  <p className="text-accent font-semibold">{formatPrice(100)}</p>
+                </button>
+              </div>
+            </div>
+
             <div className="bg-accent/10 border border-accent/20 rounded-xl p-4">
               <p className="text-sm font-medium text-accent">💵 Cash on Delivery (COD)</p>
               <p className="text-xs text-muted-foreground mt-1">
@@ -294,7 +349,7 @@ export default function CheckoutPage() {
               disabled={loading || items.length === 0}
               className="w-full py-4 bg-accent text-accent-foreground rounded-xl font-semibold text-lg hover:bg-accent/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Placing Order...' : `Place Order (COD) • ${formatPrice(total)}`}
+              {loading ? 'Placing Order...' : `Place Order (COD) • ${formatPrice(grandTotal)}`}
             </button>
           </form>
         </div>
