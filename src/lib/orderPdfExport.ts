@@ -5,6 +5,7 @@ import { Order } from '@/types';
 const formatPricePdf = (price: number): string => {
   return `Tk ${price.toLocaleString('en-BD')}`;
 };
+
 export function exportOrderToPdf(order: Order) {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -34,7 +35,7 @@ export function exportOrderToPdf(order: Order) {
   };
 
   // Header
-  addText('MAZZÉ STUDIO', 0, yPos, { fontSize: 24, fontStyle: 'bold', align: 'center', color: [30, 58, 138] });
+  addText('MAZZE STUDIO', 0, yPos, { fontSize: 24, fontStyle: 'bold', align: 'center', color: [30, 58, 138] });
   yPos += 8;
   addText('Order Confirmation', 0, yPos, { fontSize: 14, align: 'center', color: [100, 100, 100] });
   yPos += 15;
@@ -144,22 +145,50 @@ export function exportOrderToPdf(order: Order) {
   const orderSubtotal = order.subtotal ?? subtotal;
   const orderDeliveryCharge = order.deliveryCharge ?? 0;
   
+  // Calculate box height based on whether coupon is applied
+  const hasCoupon = order.appliedCoupon;
+  const summaryBoxHeight = hasCoupon ? 65 : 45;
+  
   doc.setFillColor(250, 250, 250);
-  doc.roundedRect(pageWidth - 100, yPos, 80, 45, 3, 3, 'F');
+  doc.roundedRect(pageWidth - 100, yPos, 80, summaryBoxHeight, 3, 3, 'F');
 
-  addText('Subtotal:', pageWidth - 95, yPos + 10, { fontSize: 10, color: [100, 100, 100] });
-  addText(formatPricePdf(orderSubtotal), rightMargin - 5, yPos + 10, { fontSize: 10, align: 'right' });
+  let summaryY = yPos + 10;
+  
+  addText('Subtotal:', pageWidth - 95, summaryY, { fontSize: 10, color: [100, 100, 100] });
+  addText(formatPricePdf(orderSubtotal), rightMargin - 5, summaryY, { fontSize: 10, align: 'right' });
+  summaryY += 10;
 
-  addText('Delivery:', pageWidth - 95, yPos + 20, { fontSize: 10, color: [100, 100, 100] });
-  addText(formatPricePdf(orderDeliveryCharge), rightMargin - 5, yPos + 20, { fontSize: 10, align: 'right' });
+  addText('Delivery:', pageWidth - 95, summaryY, { fontSize: 10, color: [100, 100, 100] });
+  addText(formatPricePdf(orderDeliveryCharge), rightMargin - 5, summaryY, { fontSize: 10, align: 'right' });
+  summaryY += 10;
+  
+  // Show coupon discount if applied
+  if (hasCoupon) {
+    const couponLabel = order.appliedCoupon!.type === 'price_reduction' ? 'Price Discount:' : 'Delivery Discount:';
+    addText(couponLabel, pageWidth - 95, summaryY, { fontSize: 10, color: [34, 197, 94] });
+    addText(`-${formatPricePdf(order.appliedCoupon!.discountAmount)}`, rightMargin - 5, summaryY, { fontSize: 10, align: 'right', color: [34, 197, 94] });
+    summaryY += 10;
+  }
 
   doc.setDrawColor(180, 180, 180);
-  doc.line(pageWidth - 95, yPos + 26, rightMargin - 5, yPos + 26);
+  doc.line(pageWidth - 95, summaryY - 4, rightMargin - 5, summaryY - 4);
 
-  addText('Total:', pageWidth - 95, yPos + 35, { fontSize: 12, fontStyle: 'bold' });
-  addText(formatPricePdf(order.total), rightMargin - 5, yPos + 35, { fontSize: 12, fontStyle: 'bold', color: [30, 58, 138], align: 'right' });
+  addText('Total:', pageWidth - 95, summaryY + 5, { fontSize: 12, fontStyle: 'bold' });
+  addText(formatPricePdf(order.total), rightMargin - 5, summaryY + 5, { fontSize: 12, fontStyle: 'bold', color: [30, 58, 138], align: 'right' });
 
-  yPos += 55;
+  yPos += summaryBoxHeight + 10;
+  
+  // Show Applied Coupon Code
+  if (hasCoupon) {
+    doc.setFillColor(240, 253, 244);
+    doc.roundedRect(leftMargin, yPos, pageWidth - 40, 20, 3, 3, 'F');
+    addText('Coupon Applied:', leftMargin + 5, yPos + 8, { fontSize: 10, color: [34, 197, 94] });
+    addText(order.appliedCoupon!.code, leftMargin + 50, yPos + 8, { fontSize: 10, fontStyle: 'bold', color: [34, 197, 94] });
+    const typeLabel = order.appliedCoupon!.type === 'price_reduction' ? 'Price Reduction' : 
+                      order.appliedCoupon!.type === 'free_delivery_inside' ? 'Free Delivery (Inside Dhaka)' : 'Free Delivery (Outside Dhaka)';
+    addText(typeLabel, leftMargin + 5, yPos + 15, { fontSize: 8, color: [100, 100, 100] });
+    yPos += 25;
+  }
 
   // Notes
   if (order.notes) {
@@ -177,7 +206,7 @@ export function exportOrderToPdf(order: Order) {
   const footerY = doc.internal.pageSize.getHeight() - 20;
   doc.setDrawColor(200, 200, 200);
   doc.line(leftMargin, footerY - 10, rightMargin, footerY - 10);
-  addText('Thank you for shopping with Mazzé Studio!', 0, footerY, { fontSize: 10, align: 'center', color: [100, 100, 100] });
+  addText('Thank you for shopping with Mazze Studio!', 0, footerY, { fontSize: 10, align: 'center', color: [100, 100, 100] });
   addText('For support, contact us via WhatsApp', 0, footerY + 5, { fontSize: 8, align: 'center', color: [150, 150, 150] });
 
   // Save the PDF

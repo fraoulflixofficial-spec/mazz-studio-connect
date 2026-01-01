@@ -4,9 +4,9 @@ import { Header } from '@/components/user/Header';
 import { useCart } from '@/contexts/CartContext';
 import { formatPrice } from '@/lib/helpers';
 import { createOrder, decrementStock } from '@/lib/database';
-import { Trash2, Minus, Plus, MapPin, Phone, User, FileText, CheckCircle2, Copy, Package, Truck } from 'lucide-react';
+import { Trash2, Minus, Plus, MapPin, Phone, User, FileText, CheckCircle2, Copy, Package, Truck, Tag, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { DeliveryZone } from '@/types';
+import { DeliveryZone, AppliedCoupon, CouponCodes } from '@/types';
 
 const DELIVERY_CHARGES = {
   inside_dhaka: 80,
@@ -27,9 +27,63 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [orderId, setOrderId] = useState('');
+  
+  // Coupon state
+  const [couponCode, setCouponCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
+  const [couponError, setCouponError] = useState('');
 
-  const deliveryCharge = DELIVERY_CHARGES[deliveryZone];
-  const grandTotal = total + deliveryCharge;
+  // Calculate discounts
+  const baseDeliveryCharge = DELIVERY_CHARGES[deliveryZone];
+  const deliveryDiscount = appliedCoupon?.type === 'free_delivery_inside' || appliedCoupon?.type === 'free_delivery_outside' 
+    ? appliedCoupon.discountAmount : 0;
+  const priceDiscount = appliedCoupon?.type === 'price_reduction' ? appliedCoupon.discountAmount : 0;
+  
+  const finalDeliveryCharge = Math.max(0, baseDeliveryCharge - deliveryDiscount);
+  const finalSubtotal = Math.max(0, total - priceDiscount);
+  const grandTotal = finalSubtotal + finalDeliveryCharge;
+
+  // Validate coupon against all cart items
+  const validateCoupon = (code: string): AppliedCoupon | null => {
+    if (!code.trim()) return null;
+    
+    for (const item of items) {
+      const couponCodes = item.product.couponCodes;
+      if (!couponCodes) continue;
+      
+      // Check inside dhaka code
+      if (couponCodes.insideDhakaCode && couponCodes.insideDhakaCode === code && deliveryZone === 'inside_dhaka') {
+        return { code, type: 'free_delivery_inside', discountAmount: 80 };
+      }
+      // Check outside dhaka code
+      if (couponCodes.outsideDhakaCode && couponCodes.outsideDhakaCode === code && deliveryZone === 'outside_dhaka') {
+        return { code, type: 'free_delivery_outside', discountAmount: 100 };
+      }
+      // Check price reduction code
+      if (couponCodes.priceReductionCode && couponCodes.priceReductionCode === code && couponCodes.priceReductionAmount) {
+        return { code, type: 'price_reduction', discountAmount: couponCodes.priceReductionAmount };
+      }
+    }
+    return null;
+  };
+
+  const handleApplyCoupon = () => {
+    setCouponError('');
+    const validCoupon = validateCoupon(couponCode);
+    if (validCoupon) {
+      setAppliedCoupon(validCoupon);
+      toast({ title: 'Coupon Applied!', description: `Discount of ${formatPrice(validCoupon.discountAmount)} applied.` });
+    } else {
+      setCouponError('Invalid coupon code');
+      setAppliedCoupon(null);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponCode('');
+    setCouponError('');
+  };
 
   const handleCopyOrderId = () => {
     navigator.clipboard.writeText(orderId);
@@ -63,8 +117,7 @@ export default function CheckoutPage() {
     setLoading(true);
 
     try {
-      // Create order and get the order ID
-      const newOrderId = await createOrder({
+      const orderData: any = {
         customerName: formData.customerName,
         phone: formData.phone,
         address: formData.address,
@@ -76,15 +129,20 @@ export default function CheckoutPage() {
           qty: item.qty,
           warranty: item.product.warranty,
         })),
-        subtotal: total,
-        deliveryCharge,
+        subtotal: finalSubtotal,
+        deliveryCharge: finalDeliveryCharge,
         deliveryZone,
         total: grandTotal,
         status: 'placed',
         createdAt: Date.now(),
-      });
+      };
+      
+      if (appliedCoupon) {
+        orderData.appliedCoupon = appliedCoupon;
+      }
+      
+      const newOrderId = await createOrder(orderData);
 
-      // Decrement stock for each item
       for (const item of items) {
         await decrementStock(item.product.id, item.qty);
       }
@@ -119,7 +177,6 @@ export default function CheckoutPage() {
               Thank you for your order. We will contact you soon.
             </p>
 
-            {/* Order Tracking Code */}
             <div className="bg-muted/50 rounded-xl p-6 mb-6">
               <p className="text-sm text-muted-foreground mb-2">Your Order Tracking Code</p>
               <div className="flex items-center justify-center gap-2">
@@ -226,15 +283,69 @@ export default function CheckoutPage() {
                     </div>
                   </div>
                 ))}
+                
+                {/* Coupon Code Section */}
+                <div className="p-4 space-y-3">
+                  <label className="flex items-center gap-2 text-sm font-medium">
+                    <Tag className="w-4 h-4" />
+                    Discount Code
+                  </label>
+                  {appliedCoupon ? (
+                    <div className="flex items-center justify-between p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
+                      <div>
+                        <p className="text-sm font-medium text-green-600">{appliedCoupon.code}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {appliedCoupon.type === 'price_reduction' ? 'Price Discount' : 'Free Delivery'}: -{formatPrice(appliedCoupon.discountAmount)}
+                        </p>
+                      </div>
+                      <button onClick={handleRemoveCoupon} className="p-1 hover:bg-muted rounded">
+                        <X className="w-4 h-4 text-muted-foreground" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={couponCode}
+                        onChange={(e) => setCouponCode(e.target.value)}
+                        placeholder="Enter coupon code"
+                        className="flex-1 px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/50"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleApplyCoupon}
+                        className="px-4 py-2 bg-accent text-accent-foreground rounded-lg text-sm font-medium hover:bg-accent/90"
+                      >
+                        Apply
+                      </button>
+                    </div>
+                  )}
+                  {couponError && <p className="text-xs text-destructive">{couponError}</p>}
+                </div>
+                
                 <div className="p-4 bg-muted/50 space-y-2">
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Subtotal</span>
                     <span>{formatPrice(total)}</span>
                   </div>
+                  {priceDiscount > 0 && (
+                    <div className="flex justify-between text-sm text-green-600">
+                      <span>Price Discount</span>
+                      <span>-{formatPrice(priceDiscount)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Delivery</span>
-                    <span>{formatPrice(deliveryCharge)}</span>
+                    <span className={deliveryDiscount > 0 ? 'line-through text-muted-foreground' : ''}>
+                      {formatPrice(baseDeliveryCharge)}
+                    </span>
                   </div>
+                  {deliveryDiscount > 0 && (
+                    <div className="flex justify-between text-sm text-green-600">
+                      <span>Delivery Discount</span>
+                      <span>-{formatPrice(deliveryDiscount)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between text-lg font-semibold pt-2 border-t border-border">
                     <span>Total</span>
                     <span className="text-accent">{formatPrice(grandTotal)}</span>
@@ -318,7 +429,11 @@ export default function CheckoutPage() {
               <div className="grid grid-cols-2 gap-3">
                 <button
                   type="button"
-                  onClick={() => setDeliveryZone('inside_dhaka')}
+                  onClick={() => {
+                    setDeliveryZone('inside_dhaka');
+                    setAppliedCoupon(null);
+                    setCouponCode('');
+                  }}
                   className={`p-3 rounded-lg border-2 text-center transition-all ${
                     deliveryZone === 'inside_dhaka'
                       ? 'border-accent bg-accent/10'
@@ -330,7 +445,11 @@ export default function CheckoutPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setDeliveryZone('outside_dhaka')}
+                  onClick={() => {
+                    setDeliveryZone('outside_dhaka');
+                    setAppliedCoupon(null);
+                    setCouponCode('');
+                  }}
                   className={`p-3 rounded-lg border-2 text-center transition-all ${
                     deliveryZone === 'outside_dhaka'
                       ? 'border-accent bg-accent/10'

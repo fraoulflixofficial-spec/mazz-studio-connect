@@ -1,3 +1,11 @@
+// Coupon codes structure for products/offers
+export interface CouponCodes {
+  insideDhakaCode?: string;
+  outsideDhakaCode?: string;
+  priceReductionCode?: string;
+  priceReductionAmount?: number;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -14,6 +22,7 @@ export interface Product {
   productGroup?: string;
   brand?: string;
   warranty?: string;
+  couponCodes?: CouponCodes;
 }
 
 export const FEATURED_CATEGORIES = [
@@ -50,6 +59,13 @@ export type OrderStatus = 'placed' | 'confirmed' | 'packed' | 'shipped' | 'out_f
 
 export type DeliveryZone = 'inside_dhaka' | 'outside_dhaka';
 
+// Applied coupon information stored with order
+export interface AppliedCoupon {
+  code: string;
+  type: 'free_delivery_inside' | 'free_delivery_outside' | 'price_reduction';
+  discountAmount: number;
+}
+
 export interface Order {
   id: string;
   customerName: string;
@@ -63,6 +79,7 @@ export interface Order {
   status: OrderStatus;
   createdAt: number;
   notes?: string;
+  appliedCoupon?: AppliedCoupon;
 }
 
 export interface CartItem {
@@ -83,6 +100,7 @@ export interface Offer {
   createdAt: number;
   colors?: string[];
   warranty?: string;
+  couponCodes?: CouponCodes;
 }
 
 export interface OfferCartItem {
