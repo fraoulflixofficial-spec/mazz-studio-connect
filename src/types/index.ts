@@ -32,7 +32,7 @@ export const FEATURED_CATEGORIES = [
   'Speakers',
   'Watches',
   'Mobile Phones',
-  'Mobile Accessories',
+  'Accessories',
   'Gaming Consoles',
   'Controllers',
   'Camera'
