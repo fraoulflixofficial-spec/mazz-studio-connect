@@ -80,6 +80,10 @@ export function AdminDashboard() {
     productGroup: string;
     brand: string;
     warranty: string;
+    insideDhakaCode: string;
+    outsideDhakaCode: string;
+    priceReductionCode: string;
+    priceReductionAmount: number;
   }>({
     name: '',
     price: 0,
@@ -94,6 +98,10 @@ export function AdminDashboard() {
     productGroup: '',
     brand: '',
     warranty: '',
+    insideDhakaCode: '',
+    outsideDhakaCode: '',
+    priceReductionCode: '',
+    priceReductionAmount: 0,
   });
 
   // Slider Modal State
@@ -117,6 +125,10 @@ export function AdminDashboard() {
     stock: number;
     colors: string;
     warranty: string;
+    insideDhakaCode: string;
+    outsideDhakaCode: string;
+    priceReductionCode: string;
+    priceReductionAmount: number;
   }>({
     title: '',
     description: '',
@@ -126,6 +138,10 @@ export function AdminDashboard() {
     stock: 0,
     colors: '',
     warranty: '',
+    insideDhakaCode: '',
+    outsideDhakaCode: '',
+    priceReductionCode: '',
+    priceReductionAmount: 0,
   });
 
   useEffect(() => {
@@ -164,6 +180,10 @@ export function AdminDashboard() {
         productGroup: product.productGroup || '',
         brand: product.brand || '',
         warranty: product.warranty || '',
+        insideDhakaCode: product.couponCodes?.insideDhakaCode || '',
+        outsideDhakaCode: product.couponCodes?.outsideDhakaCode || '',
+        priceReductionCode: product.couponCodes?.priceReductionCode || '',
+        priceReductionAmount: product.couponCodes?.priceReductionAmount || 0,
       });
     } else {
       setEditingProduct(null);
@@ -181,6 +201,10 @@ export function AdminDashboard() {
         productGroup: '',
         brand: '',
         warranty: '',
+        insideDhakaCode: '',
+        outsideDhakaCode: '',
+        priceReductionCode: '',
+        priceReductionAmount: 0,
       });
     }
     setProductModalOpen(true);
@@ -215,6 +239,24 @@ export function AdminDashboard() {
     }
     if (productForm.warranty.trim()) {
       data.warranty = productForm.warranty.trim();
+    }
+    
+    // Add coupon codes if any are set
+    const hasCouponCodes = productForm.insideDhakaCode.trim() || 
+                           productForm.outsideDhakaCode.trim() || 
+                           productForm.priceReductionCode.trim();
+    if (hasCouponCodes) {
+      data.couponCodes = {};
+      if (productForm.insideDhakaCode.trim()) {
+        data.couponCodes.insideDhakaCode = productForm.insideDhakaCode.trim();
+      }
+      if (productForm.outsideDhakaCode.trim()) {
+        data.couponCodes.outsideDhakaCode = productForm.outsideDhakaCode.trim();
+      }
+      if (productForm.priceReductionCode.trim()) {
+        data.couponCodes.priceReductionCode = productForm.priceReductionCode.trim();
+        data.couponCodes.priceReductionAmount = Number(productForm.priceReductionAmount) || 0;
+      }
     }
 
     try {
@@ -330,6 +372,10 @@ export function AdminDashboard() {
         stock: offer.stock,
         colors: offer.colors?.join(', ') || '',
         warranty: offer.warranty || '',
+        insideDhakaCode: offer.couponCodes?.insideDhakaCode || '',
+        outsideDhakaCode: offer.couponCodes?.outsideDhakaCode || '',
+        priceReductionCode: offer.couponCodes?.priceReductionCode || '',
+        priceReductionAmount: offer.couponCodes?.priceReductionAmount || 0,
       });
     } else {
       setEditingOffer(null);
@@ -342,6 +388,10 @@ export function AdminDashboard() {
         stock: 0,
         colors: '',
         warranty: '',
+        insideDhakaCode: '',
+        outsideDhakaCode: '',
+        priceReductionCode: '',
+        priceReductionAmount: 0,
       });
     }
     setOfferModalOpen(true);
@@ -363,6 +413,24 @@ export function AdminDashboard() {
     // Only add warranty if it has a value
     if (offerForm.warranty.trim()) {
       data.warranty = offerForm.warranty.trim();
+    }
+    
+    // Add coupon codes if any are set
+    const hasCouponCodes = offerForm.insideDhakaCode.trim() || 
+                           offerForm.outsideDhakaCode.trim() || 
+                           offerForm.priceReductionCode.trim();
+    if (hasCouponCodes) {
+      data.couponCodes = {};
+      if (offerForm.insideDhakaCode.trim()) {
+        data.couponCodes.insideDhakaCode = offerForm.insideDhakaCode.trim();
+      }
+      if (offerForm.outsideDhakaCode.trim()) {
+        data.couponCodes.outsideDhakaCode = offerForm.outsideDhakaCode.trim();
+      }
+      if (offerForm.priceReductionCode.trim()) {
+        data.couponCodes.priceReductionCode = offerForm.priceReductionCode.trim();
+        data.couponCodes.priceReductionAmount = Number(offerForm.priceReductionAmount) || 0;
+      }
     }
 
     try {
@@ -906,6 +974,58 @@ export function AdminDashboard() {
                   className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/50"
                 />
               </div>
+              
+              {/* Coupon Codes Section */}
+              <div className="border-t border-border pt-4 mt-4">
+                <h3 className="text-sm font-semibold text-accent mb-3">Coupon Codes (Optional)</h3>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Free Delivery - Inside Dhaka Code</label>
+                    <input
+                      type="text"
+                      value={productForm.insideDhakaCode}
+                      onChange={(e) => setProductForm({ ...productForm, insideDhakaCode: e.target.value })}
+                      placeholder="e.g., UZ879"
+                      className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/50"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">Removes ৳80 delivery charge</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Free Delivery - Outside Dhaka Code</label>
+                    <input
+                      type="text"
+                      value={productForm.outsideDhakaCode}
+                      onChange={(e) => setProductForm({ ...productForm, outsideDhakaCode: e.target.value })}
+                      placeholder="e.g., 81hK"
+                      className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/50"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">Removes ৳100 delivery charge</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Price Reduction Code</label>
+                      <input
+                        type="text"
+                        value={productForm.priceReductionCode}
+                        onChange={(e) => setProductForm({ ...productForm, priceReductionCode: e.target.value })}
+                        placeholder="e.g., 189HJ"
+                        className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/50"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Reduction Amount (৳)</label>
+                      <input
+                        type="number"
+                        value={productForm.priceReductionAmount}
+                        onChange={(e) => setProductForm({ ...productForm, priceReductionAmount: Number(e.target.value) })}
+                        placeholder="e.g., 50"
+                        className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/50"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium mb-1">Button Text</label>
@@ -1105,6 +1225,57 @@ export function AdminDashboard() {
                   placeholder="e.g., 7 days, 6 months, 1 year"
                   className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/50"
                 />
+              </div>
+              
+              {/* Coupon Codes Section */}
+              <div className="border-t border-border pt-4 mt-4">
+                <h3 className="text-sm font-semibold text-accent mb-3">Coupon Codes (Optional)</h3>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Free Delivery - Inside Dhaka Code</label>
+                    <input
+                      type="text"
+                      value={offerForm.insideDhakaCode}
+                      onChange={(e) => setOfferForm({ ...offerForm, insideDhakaCode: e.target.value })}
+                      placeholder="e.g., UZ879"
+                      className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/50"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">Removes ৳80 delivery charge</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Free Delivery - Outside Dhaka Code</label>
+                    <input
+                      type="text"
+                      value={offerForm.outsideDhakaCode}
+                      onChange={(e) => setOfferForm({ ...offerForm, outsideDhakaCode: e.target.value })}
+                      placeholder="e.g., 81hK"
+                      className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/50"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">Removes ৳100 delivery charge</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Price Reduction Code</label>
+                      <input
+                        type="text"
+                        value={offerForm.priceReductionCode}
+                        onChange={(e) => setOfferForm({ ...offerForm, priceReductionCode: e.target.value })}
+                        placeholder="e.g., 189HJ"
+                        className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/50"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Reduction Amount (৳)</label>
+                      <input
+                        type="number"
+                        value={offerForm.priceReductionAmount}
+                        onChange={(e) => setOfferForm({ ...offerForm, priceReductionAmount: Number(e.target.value) })}
+                        placeholder="e.g., 50"
+                        className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/50"
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
               <button
                 type="submit"
