@@ -134,7 +134,7 @@ export function AnalyticsSection({ products, offers = [] }: AnalyticsSectionProp
         {mostViewedProduct ? (
           <div className="flex items-center gap-4 bg-gradient-to-r from-accent/10 to-transparent rounded-xl p-4">
             <img
-              src={mostViewedProduct.images[0] || '/placeholder.svg'}
+              src={mostViewedProduct.images?.[0] || '/placeholder.svg'}
               alt={mostViewedProduct.name}
               className="w-20 h-20 object-cover rounded-lg"
             />

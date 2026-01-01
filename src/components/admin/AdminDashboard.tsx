@@ -578,7 +578,7 @@ export function AdminDashboard() {
                   className="flex items-center gap-4 p-4 bg-card border border-border rounded-xl"
                 >
                   <img
-                    src={product.images[0] || '/placeholder.svg'}
+                    src={product.images?.[0] || '/placeholder.svg'}
                     alt=""
                     className="w-16 h-16 object-cover rounded-lg"
                   />
