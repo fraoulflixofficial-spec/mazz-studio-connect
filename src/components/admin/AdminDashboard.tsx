@@ -182,20 +182,31 @@ export function AdminDashboard() {
 
   const handleProductSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const data = {
+    
+    // Build the data object, excluding undefined/empty optional fields for Firebase compatibility
+    const colorsArray = productForm.colors.split(',').map((c) => c.trim()).filter(Boolean);
+    const imagesArray = productForm.images.filter((img) => img.trim());
+    
+    const data: Omit<Product, 'id'> = {
       name: productForm.name,
-      price: productForm.price,
-      images: productForm.images.filter((img) => img.trim()),
-      stock: productForm.stock,
+      price: Number(productForm.price),
+      images: imagesArray.length > 0 ? imagesArray : [],
+      stock: Number(productForm.stock),
       menuCategory: productForm.menuCategory,
       featuredCategory: productForm.featuredCategory,
-      buttonText: productForm.buttonText,
+      buttonText: productForm.buttonText || 'Buy Now',
       buttonUrl: productForm.buttonUrl,
-      description: productForm.description,
-      colors: productForm.colors.split(',').map((c) => c.trim()).filter(Boolean),
-      productGroup: productForm.productGroup.trim() || undefined,
-      brand: productForm.brand.trim() || undefined,
+      description: productForm.description || '',
+      colors: colorsArray.length > 0 ? colorsArray : [],
     };
+    
+    // Only add optional fields if they have values (Firebase doesn't like undefined)
+    if (productForm.productGroup.trim()) {
+      data.productGroup = productForm.productGroup.trim();
+    }
+    if (productForm.brand.trim()) {
+      data.brand = productForm.brand.trim();
+    }
 
     try {
       if (editingProduct) {
@@ -207,6 +218,7 @@ export function AdminDashboard() {
       }
       setProductModalOpen(false);
     } catch (error) {
+      console.error('Product save error:', error);
       toast({ title: 'Error', description: 'Failed to save product', variant: 'destructive' });
     }
   };
