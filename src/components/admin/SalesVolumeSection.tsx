@@ -1,13 +1,14 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Product, Order } from '@/types';
+import { Product, Order, Offer } from '@/types';
 import { calculateSalesAnalytics, getDateString } from '@/lib/analytics';
 import { formatPrice } from '@/lib/helpers';
-import { ShoppingBag, DollarSign, Flame, TrendingUp } from 'lucide-react';
+import { ShoppingBag, DollarSign, Flame, TrendingUp, Gift } from 'lucide-react';
 import { DataCollectionPeriod } from './DataCollectionPeriod';
 
 interface SalesVolumeSectionProps {
   products: Product[];
   orders: Order[];
+  offers?: Offer[];
 }
 
 interface MetricCardProps {
@@ -56,7 +57,7 @@ const MetricCard = ({ title, today, lastWeek, currentMonth, lastMonth, icon, isC
   );
 };
 
-export function SalesVolumeSection({ products, orders }: SalesVolumeSectionProps) {
+export function SalesVolumeSection({ products, orders, offers = [] }: SalesVolumeSectionProps) {
   const [period, setPeriod] = useState<{ startDate: Date; endDate: Date } | null>(null);
 
   const handlePeriodChange = useCallback((startDate: Date, endDate: Date) => {
@@ -72,11 +73,37 @@ export function SalesVolumeSection({ products, orders }: SalesVolumeSectionProps
     if (!analytics) return [];
     return analytics.topSoldProducts
       .map(({ productId, qty }) => {
+        // First check regular products
         const product = products.find(p => p.id === productId);
-        return product ? { product, qty } : null;
+        if (product) {
+          return { 
+            product: { ...product, isOffer: false }, 
+            qty 
+          };
+        }
+        // Then check offers
+        const offer = offers.find(o => o.id === productId);
+        if (offer) {
+          return { 
+            product: { 
+              id: offer.id,
+              name: offer.title,
+              price: offer.comboPrice,
+              images: offer.images || [],
+              stock: offer.stock,
+              menuCategory: 'Offer',
+              featuredCategory: 'Offer',
+              buttonText: 'View Offer',
+              buttonUrl: `/offers/${offer.id}`,
+              isOffer: true,
+            } as Product & { isOffer: boolean }, 
+            qty 
+          };
+        }
+        return null;
       })
-      .filter(Boolean) as { product: Product; qty: number }[];
-  }, [analytics?.topSoldProducts, products]);
+      .filter(Boolean) as { product: Product & { isOffer?: boolean }; qty: number }[];
+  }, [analytics?.topSoldProducts, products, offers]);
 
   return (
     <div className="space-y-6">
@@ -134,8 +161,14 @@ export function SalesVolumeSection({ products, orders }: SalesVolumeSectionProps
                     <div className="absolute -top-2 -left-2 w-6 h-6 rounded-full bg-accent text-accent-foreground text-xs font-bold flex items-center justify-center">
                       #{index + 1}
                     </div>
+                    {/* Offer Badge */}
+                    {(product as any).isOffer && (
+                      <div className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-green-500 text-white text-xs flex items-center justify-center">
+                        <Gift className="w-3 h-3" />
+                      </div>
+                    )}
                     <img
-                      src={product.images[0] || '/placeholder.svg'}
+                      src={product.images?.[0] || '/placeholder.svg'}
                       alt={product.name}
                       className="w-full aspect-square object-cover rounded-lg mb-2"
                     />

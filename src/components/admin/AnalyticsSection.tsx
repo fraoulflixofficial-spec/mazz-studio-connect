@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Product } from '@/types';
+import { Product, Offer } from '@/types';
 import { subscribeToVisitorAnalytics, subscribeToProductViewAnalytics, getDateString } from '@/lib/analytics';
-import { Users, Eye, TrendingUp, Award } from 'lucide-react';
+import { Users, Eye, TrendingUp, Award, Gift } from 'lucide-react';
 import { DataCollectionPeriod } from './DataCollectionPeriod';
 
 interface AnalyticsSectionProps {
   products: Product[];
+  offers?: Offer[];
 }
 
 interface MetricCardProps {
@@ -46,7 +47,7 @@ const MetricCard = ({ title, today, lastWeek, currentMonth, lastMonth, icon }: M
   </div>
 );
 
-export function AnalyticsSection({ products }: AnalyticsSectionProps) {
+export function AnalyticsSection({ products, offers = [] }: AnalyticsSectionProps) {
   const [period, setPeriod] = useState<{ startDate: Date; endDate: Date } | null>(null);
   const [visitorData, setVisitorData] = useState({
     today: 0,
@@ -83,7 +84,10 @@ export function AnalyticsSection({ products }: AnalyticsSectionProps) {
     };
   }, [period]);
 
+  // Check both products and offers for most viewed item
   const mostViewedProduct = products.find(p => p.id === productViewData.mostViewedProductId);
+  const mostViewedOffer = offers.find(o => o.id === productViewData.mostViewedProductId);
+  const isOfferMostViewed = !mostViewedProduct && !!mostViewedOffer;
 
   return (
     <div className="space-y-6">
@@ -119,10 +123,10 @@ export function AnalyticsSection({ products }: AnalyticsSectionProps) {
       <div className="bg-card border border-border rounded-xl p-4 lg:p-6">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center text-accent">
-            <Award className="w-5 h-5" />
+            {isOfferMostViewed ? <Gift className="w-5 h-5" /> : <Award className="w-5 h-5" />}
           </div>
           <div>
-            <h3 className="font-medium text-foreground">Most Viewed Product</h3>
+            <h3 className="font-medium text-foreground">Most Viewed {isOfferMostViewed ? 'Offer' : 'Product'}</h3>
             <p className="text-xs text-muted-foreground">Current Period</p>
           </div>
         </div>
@@ -139,6 +143,26 @@ export function AnalyticsSection({ products }: AnalyticsSectionProps) {
               <p className="text-sm text-accent">{mostViewedProduct.featuredCategory}</p>
               <p className="text-xs text-muted-foreground mt-1">
                 {productViewData.productViewCounts[mostViewedProduct.id] || 0} views this period
+              </p>
+            </div>
+          </div>
+        ) : mostViewedOffer ? (
+          <div className="flex items-center gap-4 bg-gradient-to-r from-accent/10 to-transparent rounded-xl p-4">
+            <div className="relative">
+              <img
+                src={mostViewedOffer.images?.[0] || '/placeholder.svg'}
+                alt={mostViewedOffer.title}
+                className="w-20 h-20 object-cover rounded-lg"
+              />
+              <div className="absolute -top-1 -right-1 w-5 h-5 bg-accent rounded-full flex items-center justify-center">
+                <Gift className="w-3 h-3 text-accent-foreground" />
+              </div>
+            </div>
+            <div className="flex-1 min-w-0">
+              <h4 className="font-medium text-foreground truncate">{mostViewedOffer.title}</h4>
+              <p className="text-sm text-accent">Special Offer</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {productViewData.productViewCounts[mostViewedOffer.id] || 0} views this period
               </p>
             </div>
           </div>
