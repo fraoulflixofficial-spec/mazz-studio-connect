@@ -41,7 +41,7 @@ export function RelatedProducts({ currentProduct, allProducts }: RelatedProducts
             {/* Product Image */}
             <div className="aspect-square bg-muted/30 overflow-hidden">
               <img
-                src={product.images[0] || '/placeholder.svg'}
+                src={product.images?.[0] || '/placeholder.svg'}
                 alt={product.name}
                 className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
                 loading="lazy"
