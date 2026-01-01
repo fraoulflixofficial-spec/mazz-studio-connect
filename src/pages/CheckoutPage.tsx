@@ -74,6 +74,7 @@ export default function CheckoutPage() {
           productName: item.product.name,
           price: item.product.price,
           qty: item.qty,
+          warranty: item.product.warranty,
         })),
         subtotal: total,
         deliveryCharge,
@@ -191,6 +192,11 @@ export default function CheckoutPage() {
                       {item.selectedColor && (
                         <p className="text-xs text-muted-foreground mt-1">
                           Color: {item.selectedColor}
+                        </p>
+                      )}
+                      {item.product.warranty && (
+                        <p className="text-xs text-accent mt-1">
+                          Warranty: {item.product.warranty}
                         </p>
                       )}
                       <p className="text-accent font-semibold mt-1">

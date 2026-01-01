@@ -120,7 +120,18 @@ export function exportOrderToPdf(order: Order) {
     addText(`x${item.qty}`, pageWidth - 65, yPos, { fontSize: 10 });
     addText(formatPricePdf(itemTotal), rightMargin - 5, yPos, { fontSize: 10, align: 'right' });
     
-    yPos += (productNameLines.length * 5) + 5;
+    yPos += (productNameLines.length * 5) + 2;
+    
+    // Show warranty if present
+    if (item.warranty) {
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'italic');
+      doc.setTextColor(100, 100, 100);
+      doc.text(`Warranty: ${item.warranty}`, leftMargin + 5, yPos);
+      yPos += 5;
+    }
+    
+    yPos += 3;
     
     // Light separator
     doc.setDrawColor(230, 230, 230);

@@ -178,6 +178,13 @@ export default function ProductPage() {
               </div>
             )}
 
+            {product.warranty && (
+              <div className="flex items-center gap-2 p-3 bg-accent/10 border border-accent/20 rounded-lg">
+                <span className="text-accent font-medium">Warranty:</span>
+                <span className="text-foreground">{product.warranty}</span>
+              </div>
+            )}
+
             {product.colors && product.colors.length > 0 && (
               <div>
                 <p className="text-sm lg:text-base font-medium mb-3">Color</p>

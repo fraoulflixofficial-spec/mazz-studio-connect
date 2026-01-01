@@ -13,6 +13,7 @@ export interface Product {
   colors?: string[];
   productGroup?: string;
   brand?: string;
+  warranty?: string;
 }
 
 export const FEATURED_CATEGORIES = [
@@ -42,6 +43,7 @@ export interface OrderItem {
   productName: string;
   price: number;
   qty: number;
+  warranty?: string;
 }
 
 export type OrderStatus = 'placed' | 'confirmed' | 'packed' | 'shipped' | 'out_for_delivery' | 'delivered';
