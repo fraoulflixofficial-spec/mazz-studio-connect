@@ -79,6 +79,7 @@ export function AdminDashboard() {
     colors: string;
     productGroup: string;
     brand: string;
+    warranty: string;
   }>({
     name: '',
     price: 0,
@@ -92,6 +93,7 @@ export function AdminDashboard() {
     colors: '',
     productGroup: '',
     brand: '',
+    warranty: '',
   });
 
   // Slider Modal State
@@ -159,6 +161,7 @@ export function AdminDashboard() {
         colors: product.colors?.join(', ') || '',
         productGroup: product.productGroup || '',
         brand: product.brand || '',
+        warranty: product.warranty || '',
       });
     } else {
       setEditingProduct(null);
@@ -175,6 +178,7 @@ export function AdminDashboard() {
         colors: '',
         productGroup: '',
         brand: '',
+        warranty: '',
       });
     }
     setProductModalOpen(true);
@@ -206,6 +210,9 @@ export function AdminDashboard() {
     }
     if (productForm.brand.trim()) {
       data.brand = productForm.brand.trim();
+    }
+    if (productForm.warranty.trim()) {
+      data.warranty = productForm.warranty.trim();
     }
 
     try {
@@ -620,7 +627,12 @@ export function AdminDashboard() {
                   <div className="p-4 space-y-2">
                     {order.items.map((item, idx) => (
                       <div key={idx} className="flex justify-between text-sm">
-                        <span>{item.productName} x{item.qty}</span>
+                        <div>
+                          <span>{item.productName} x{item.qty}</span>
+                          {item.warranty && (
+                            <span className="ml-2 text-xs text-accent">• Warranty: {item.warranty}</span>
+                          )}
+                        </div>
                         <span className="text-muted-foreground">{formatPrice(item.price * item.qty)}</span>
                       </div>
                     ))}
@@ -872,6 +884,16 @@ export function AdminDashboard() {
                   value={productForm.colors}
                   onChange={(e) => setProductForm({ ...productForm, colors: e.target.value })}
                   placeholder="Black, White, Gold"
+                  className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/50"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Warranty</label>
+                <input
+                  type="text"
+                  value={productForm.warranty}
+                  onChange={(e) => setProductForm({ ...productForm, warranty: e.target.value })}
+                  placeholder="e.g., 7 days, 6 months, 1 year, 2 years"
                   className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/50"
                 />
               </div>
