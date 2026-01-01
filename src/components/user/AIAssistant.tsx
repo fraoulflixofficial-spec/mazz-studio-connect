@@ -333,7 +333,7 @@ export function AIAssistant() {
                       >
                         <div className="aspect-square rounded-md overflow-hidden mb-2 bg-background">
                           <img
-                            src={product.images[0]}
+                            src={product.images?.[0] || '/placeholder.svg'}
                             alt={product.name}
                             className="w-full h-full object-contain group-hover:scale-105 transition-transform"
                           />
