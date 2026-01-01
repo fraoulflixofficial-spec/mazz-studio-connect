@@ -737,12 +737,12 @@ export function AdminDashboard() {
 
         {/* Analysis Tab */}
         {activeTab === 'analysis' && (
-          <AnalyticsSection products={products} />
+          <AnalyticsSection products={products} offers={offers} />
         )}
 
         {/* Sales Volume Tab */}
         {activeTab === 'sales' && (
-          <SalesVolumeSection products={products} orders={orders} />
+          <SalesVolumeSection products={products} orders={orders} offers={offers} />
         )}
       </div>
 

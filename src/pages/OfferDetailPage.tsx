@@ -7,7 +7,7 @@ import { subscribeToOffers } from '@/lib/database';
 import { formatPrice } from '@/lib/helpers';
 import { Gift, Minus, Plus, ShoppingCart, ArrowLeft, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useVisitorTracking } from '@/hooks/useAnalyticsTracking';
+import { useVisitorTracking, useProductViewTracking } from '@/hooks/useAnalyticsTracking';
 
 export default function OfferDetailPage() {
   const { id } = useParams();
@@ -19,8 +19,9 @@ export default function OfferDetailPage() {
   const [selectedColor, setSelectedColor] = useState<string | undefined>();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  // Track visitor
+  // Track visitor and offer view (use offer id as product id for unified tracking)
   useVisitorTracking();
+  useProductViewTracking(id);
 
   useEffect(() => {
     const unsub = subscribeToOffers((offers) => {
