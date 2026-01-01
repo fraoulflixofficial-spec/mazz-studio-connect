@@ -77,6 +77,7 @@ export interface Offer {
   comboPrice: number;
   originalPrice?: number;
   stock: number;
+  sold?: number;
   createdAt: number;
   colors?: string[];
 }
