@@ -183,11 +183,16 @@ export const deleteOffer = async (id: string): Promise<void> => {
 };
 
 export const decrementOfferStock = async (offerId: string, qty: number): Promise<void> => {
-  const snapshot = await get(ref(database, `offers/${offerId}/stock`));
-  if (snapshot.exists()) {
-    const currentStock = snapshot.val();
+  const stockSnapshot = await get(ref(database, `offers/${offerId}/stock`));
+  const soldSnapshot = await get(ref(database, `offers/${offerId}/sold`));
+  
+  if (stockSnapshot.exists()) {
+    const currentStock = stockSnapshot.val();
+    const currentSold = soldSnapshot.exists() ? soldSnapshot.val() : 0;
+    
     await update(ref(database, `offers/${offerId}`), {
       stock: Math.max(0, currentStock - qty),
+      sold: currentSold + qty,
     });
   }
 };

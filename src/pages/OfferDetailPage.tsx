@@ -155,20 +155,28 @@ export default function OfferDetailPage() {
               )}
             </div>
 
-            {/* Stock Status */}
-            <div className="flex items-center gap-2">
+            {/* Stock & Sold Status */}
+            <div className="flex items-center gap-4 flex-wrap">
               {offer.stock > 0 ? (
-                <>
+                <div className="flex items-center gap-2">
                   <span className="w-2 h-2 lg:w-3 lg:h-3 bg-green-500 rounded-full animate-pulse" />
                   <span className="text-sm lg:text-base text-green-500">
-                    In Stock ({offer.stock} available)
+                    {offer.stock} in stock
                   </span>
-                </>
+                </div>
               ) : (
-                <>
+                <div className="flex items-center gap-2">
                   <span className="w-2 h-2 lg:w-3 lg:h-3 bg-destructive rounded-full" />
                   <span className="text-sm lg:text-base text-destructive">Out of Stock</span>
-                </>
+                </div>
+              )}
+              {(offer.sold ?? 0) > 0 && (
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 lg:w-3 lg:h-3 bg-yellow-500 rounded-full" />
+                  <span className="text-sm lg:text-base text-yellow-500">
+                    {offer.sold} sold
+                  </span>
+                </div>
               )}
             </div>
 
