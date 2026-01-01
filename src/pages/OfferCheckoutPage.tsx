@@ -81,6 +81,7 @@ export default function OfferCheckoutPage() {
             productName: `[OFFER] ${offer.title}${colorInfo}`,
             price: offer.comboPrice,
             qty,
+            warranty: offer.warranty,
           },
         ],
         subtotal,
