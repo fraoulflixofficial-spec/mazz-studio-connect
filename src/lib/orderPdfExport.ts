@@ -1,7 +1,10 @@
 import { jsPDF } from 'jspdf';
 import { Order } from '@/types';
-import { formatPrice } from '@/lib/helpers';
 
+// PDF-safe price formatter - uses "Tk" instead of ৳ since jsPDF default fonts don't support Bengali characters
+const formatPricePdf = (price: number): string => {
+  return `Tk ${price.toLocaleString('en-BD')}`;
+};
 export function exportOrderToPdf(order: Order) {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -115,7 +118,7 @@ export function exportOrderToPdf(order: Order) {
     doc.text(productNameLines, leftMargin + 5, yPos);
     
     addText(`x${item.qty}`, pageWidth - 65, yPos, { fontSize: 10 });
-    addText(formatPrice(itemTotal), rightMargin - 5, yPos, { fontSize: 10, align: 'right' });
+    addText(formatPricePdf(itemTotal), rightMargin - 5, yPos, { fontSize: 10, align: 'right' });
     
     yPos += (productNameLines.length * 5) + 5;
     
@@ -134,16 +137,16 @@ export function exportOrderToPdf(order: Order) {
   doc.roundedRect(pageWidth - 100, yPos, 80, 45, 3, 3, 'F');
 
   addText('Subtotal:', pageWidth - 95, yPos + 10, { fontSize: 10, color: [100, 100, 100] });
-  addText(formatPrice(orderSubtotal), rightMargin - 5, yPos + 10, { fontSize: 10, align: 'right' });
+  addText(formatPricePdf(orderSubtotal), rightMargin - 5, yPos + 10, { fontSize: 10, align: 'right' });
 
   addText('Delivery:', pageWidth - 95, yPos + 20, { fontSize: 10, color: [100, 100, 100] });
-  addText(formatPrice(orderDeliveryCharge), rightMargin - 5, yPos + 20, { fontSize: 10, align: 'right' });
+  addText(formatPricePdf(orderDeliveryCharge), rightMargin - 5, yPos + 20, { fontSize: 10, align: 'right' });
 
   doc.setDrawColor(180, 180, 180);
   doc.line(pageWidth - 95, yPos + 26, rightMargin - 5, yPos + 26);
 
   addText('Total:', pageWidth - 95, yPos + 35, { fontSize: 12, fontStyle: 'bold' });
-  addText(formatPrice(order.total), rightMargin - 5, yPos + 35, { fontSize: 12, fontStyle: 'bold', color: [30, 58, 138], align: 'right' });
+  addText(formatPricePdf(order.total), rightMargin - 5, yPos + 35, { fontSize: 12, fontStyle: 'bold', color: [30, 58, 138], align: 'right' });
 
   yPos += 55;
 
