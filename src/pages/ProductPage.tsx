@@ -105,12 +105,12 @@ export default function ProductPage() {
           <div className="space-y-4">
             <div className="aspect-square bg-card rounded-xl overflow-hidden border border-border lg:rounded-2xl">
               <img
-                src={product.images[currentImageIndex] || '/placeholder.svg'}
+                src={product.images?.[currentImageIndex] || '/placeholder.svg'}
                 alt={product.name}
                 className="w-full h-full object-contain"
               />
             </div>
-            {product.images.length > 1 && (
+            {product.images && product.images.length > 1 && (
               <div className="flex gap-2 lg:gap-3 justify-center">
                 {product.images.map((img, idx) => (
                   <button
