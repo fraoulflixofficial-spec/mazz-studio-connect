@@ -178,6 +178,14 @@ export default function OfferDetailPage() {
               </div>
             </div>
 
+            {/* Warranty */}
+            {offer.warranty && (
+              <div className="flex items-center gap-2 p-3 bg-accent/10 border border-accent/20 rounded-lg">
+                <span className="text-accent font-medium">Warranty:</span>
+                <span className="text-foreground">{offer.warranty}</span>
+              </div>
+            )}
+
             {/* Color Selection */}
             {offer.colors && offer.colors.length > 0 && (
               <div>

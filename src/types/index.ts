@@ -82,6 +82,7 @@ export interface Offer {
   sold?: number;
   createdAt: number;
   colors?: string[];
+  warranty?: string;
 }
 
 export interface OfferCartItem {

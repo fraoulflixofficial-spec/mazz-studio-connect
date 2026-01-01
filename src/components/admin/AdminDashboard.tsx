@@ -116,6 +116,7 @@ export function AdminDashboard() {
     originalPrice: number;
     stock: number;
     colors: string;
+    warranty: string;
   }>({
     title: '',
     description: '',
@@ -124,6 +125,7 @@ export function AdminDashboard() {
     originalPrice: 0,
     stock: 0,
     colors: '',
+    warranty: '',
   });
 
   useEffect(() => {
@@ -327,6 +329,7 @@ export function AdminDashboard() {
         originalPrice: offer.originalPrice || 0,
         stock: offer.stock,
         colors: offer.colors?.join(', ') || '',
+        warranty: offer.warranty || '',
       });
     } else {
       setEditingOffer(null);
@@ -338,6 +341,7 @@ export function AdminDashboard() {
         originalPrice: 0,
         stock: 0,
         colors: '',
+        warranty: '',
       });
     }
     setOfferModalOpen(true);
@@ -345,7 +349,7 @@ export function AdminDashboard() {
 
   const handleOfferSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const data = {
+    const data: Omit<Offer, 'id'> = {
       title: offerForm.title,
       description: offerForm.description,
       images: offerForm.images.filter((img) => img.trim()),
@@ -355,6 +359,11 @@ export function AdminDashboard() {
       createdAt: editingOffer?.createdAt || Date.now(),
       colors: offerForm.colors.split(',').map((c) => c.trim()).filter(Boolean),
     };
+    
+    // Only add warranty if it has a value
+    if (offerForm.warranty.trim()) {
+      data.warranty = offerForm.warranty.trim();
+    }
 
     try {
       if (editingOffer) {
@@ -1084,6 +1093,16 @@ export function AdminDashboard() {
                   value={offerForm.colors}
                   onChange={(e) => setOfferForm({ ...offerForm, colors: e.target.value })}
                   placeholder="Black, White, Gold"
+                  className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/50"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Warranty</label>
+                <input
+                  type="text"
+                  value={offerForm.warranty}
+                  onChange={(e) => setOfferForm({ ...offerForm, warranty: e.target.value })}
+                  placeholder="e.g., 7 days, 6 months, 1 year"
                   className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/50"
                 />
               </div>
