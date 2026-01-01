@@ -8,7 +8,7 @@ import {
   Gamepad2, 
   Camera,
   Ear,
-  Plug,
+  Cable,
   Joystick,
   Clock
 } from 'lucide-react';
@@ -20,7 +20,7 @@ const categoryIcons: Record<string, React.ComponentType<{ className?: string }>>
   'Speakers': Speaker,
   'Watches': Clock,
   'Mobile Phones': Smartphone,
-  'Mobile Accessories': Plug,
+  'Accessories': Cable,
   'Gaming Consoles': Gamepad2,
   'Controllers': Joystick,
   'Camera': Camera,
