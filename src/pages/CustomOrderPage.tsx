@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Header } from '@/components/user/Header';
-import { FEATURED_CATEGORIES, DeliveryZone, UrgencyLevel, FeaturedCategory } from '@/types';
+import { FEATURED_CATEGORIES, DeliveryZone, UrgencyLevel, FeaturedCategory, CustomOrder } from '@/types';
 import { createCustomOrder } from '@/lib/database';
 import { useToast } from '@/hooks/use-toast';
 import { PackagePlus, Upload, CheckCircle } from 'lucide-react';
@@ -57,24 +57,29 @@ export default function CustomOrderPage() {
     setIsSubmitting(true);
 
     try {
-      await createCustomOrder({
+      // Build order data, excluding undefined/empty optional fields for Firebase
+      const orderData: Record<string, unknown> = {
         customerName: form.customerName.trim(),
         phone: form.phone.trim(),
-        email: form.email.trim() || undefined,
         productName: form.productName.trim(),
         productCategory: form.productCategory,
-        productDescription: form.productDescription.trim() || undefined,
-        referenceLink: form.referenceLink.trim() || undefined,
         expectedBudget: Number(form.expectedBudget),
         quantity: Number(form.quantity) || 1,
         urgencyLevel: form.urgencyLevel,
         deliveryZone: form.deliveryZone as DeliveryZone,
         deliveryCharge: deliveryCharges[form.deliveryZone as DeliveryZone],
-        productImageUrl: form.productImageUrl.trim() || undefined,
-        additionalNotes: form.additionalNotes.trim() || undefined,
         status: 'pending',
         createdAt: Date.now(),
-      });
+      };
+      
+      // Only add optional fields if they have values
+      if (form.email.trim()) orderData.email = form.email.trim();
+      if (form.productDescription.trim()) orderData.productDescription = form.productDescription.trim();
+      if (form.referenceLink.trim()) orderData.referenceLink = form.referenceLink.trim();
+      if (form.productImageUrl.trim()) orderData.productImageUrl = form.productImageUrl.trim();
+      if (form.additionalNotes.trim()) orderData.additionalNotes = form.additionalNotes.trim();
+
+      await createCustomOrder(orderData as Omit<CustomOrder, 'id'>);
 
       setIsSubmitted(true);
       toast({
