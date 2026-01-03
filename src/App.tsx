@@ -15,6 +15,7 @@ import ContactsPage from "./pages/ContactsPage";
 import OffersPage from "./pages/OffersPage";
 import OfferDetailPage from "./pages/OfferDetailPage";
 import OfferCheckoutPage from "./pages/OfferCheckoutPage";
+import CustomOrderPage from "./pages/CustomOrderPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -38,6 +39,7 @@ const App = () => (
                 <Route path="/offers" element={<OffersPage />} />
                 <Route path="/offer/:id" element={<OfferDetailPage />} />
                 <Route path="/offer-checkout/:id" element={<OfferCheckoutPage />} />
+                <Route path="/custom-order" element={<CustomOrderPage />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>

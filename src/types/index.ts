@@ -108,6 +108,32 @@ export interface OfferCartItem {
   qty: number;
 }
 
+// Custom Order types
+export type CustomOrderStatus = 'pending' | 'reviewing' | 'price_quoted' | 'confirmed' | 'ordered' | 'delivered' | 'cancelled';
+
+export type UrgencyLevel = 'normal' | 'urgent';
+
+export interface CustomOrder {
+  id: string;
+  customerName: string;
+  phone: string;
+  email?: string;
+  productName: string;
+  productCategory: string;
+  productDescription?: string;
+  referenceLink?: string;
+  expectedBudget: number;
+  quantity: number;
+  urgencyLevel: UrgencyLevel;
+  deliveryZone: DeliveryZone;
+  deliveryCharge: number;
+  productImageUrl?: string;
+  additionalNotes?: string;
+  status: CustomOrderStatus;
+  adminNotes?: string;
+  createdAt: number;
+}
+
 // Analytics types
 export interface VisitorRecord {
   visitorId: string;
