@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Product, SliderItem, Order, Offer, FEATURED_CATEGORIES } from '@/types';
+import { Product, SliderItem, Order, Offer, CustomOrder, FEATURED_CATEGORIES } from '@/types';
 import {
   subscribeToProducts,
   addProduct,
@@ -17,11 +17,13 @@ import {
   addOffer,
   updateOffer,
   deleteOffer,
+  subscribeToCustomOrders,
 } from '@/lib/database';
 import { formatPrice, isYouTubeUrl } from '@/lib/helpers';
 import { useToast } from '@/hooks/use-toast';
 import { AnalyticsSection } from './AnalyticsSection';
 import { SalesVolumeSection } from './SalesVolumeSection';
+import { CustomOrdersSection } from './CustomOrdersSection';
 import { OrdersFilterSection, OrderFilters } from './OrdersFilterSection';
 import {
   LogOut,
@@ -41,10 +43,11 @@ import {
   BarChart3,
   TrendingUp,
   Download,
+  PackagePlus,
 } from 'lucide-react';
 import { exportOrderToPdf } from '@/lib/orderPdfExport';
 
-type Tab = 'products' | 'slider' | 'orders' | 'offers' | 'analysis' | 'sales';
+type Tab = 'products' | 'slider' | 'orders' | 'offers' | 'custom_orders' | 'analysis' | 'sales';
 
 export function AdminDashboard() {
   const { logout, user } = useAuth();
@@ -54,6 +57,7 @@ export function AdminDashboard() {
   const [sliderItems, setSliderItems] = useState<SliderItem[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [offers, setOffers] = useState<Offer[]>([]);
+  const [customOrders, setCustomOrders] = useState<CustomOrder[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [orderFilters, setOrderFilters] = useState<OrderFilters>({
     orderId: '',
@@ -149,11 +153,13 @@ export function AdminDashboard() {
     const unsub2 = subscribeToSlider(setSliderItems);
     const unsub3 = subscribeToOrders(setOrders);
     const unsub4 = subscribeToOffers(setOffers);
+    const unsub5 = subscribeToCustomOrders(setCustomOrders);
     return () => {
       unsub1();
       unsub2();
       unsub3();
       unsub4();
+      unsub5();
     };
   }, []);
 
@@ -525,6 +531,7 @@ export function AdminDashboard() {
             { id: 'slider', label: 'Slider', icon: Image },
             { id: 'orders', label: 'Orders', icon: ShoppingCart },
             { id: 'offers', label: 'Offer Box', icon: Gift },
+            { id: 'custom_orders', label: 'Custom Orders', icon: PackagePlus },
             { id: 'analysis', label: 'Analysis', icon: BarChart3 },
             { id: 'sales', label: 'Sales Volume', icon: TrendingUp },
           ].map((tab) => (
@@ -542,6 +549,11 @@ export function AdminDashboard() {
               {tab.id === 'orders' && orders.filter(o => o.status === 'placed').length > 0 && (
                 <span className="ml-1 px-1.5 py-0.5 bg-destructive text-destructive-foreground text-xs rounded-full">
                   {orders.filter(o => o.status === 'placed').length}
+                </span>
+              )}
+              {tab.id === 'custom_orders' && customOrders.filter(o => o.status === 'pending').length > 0 && (
+                <span className="ml-1 px-1.5 py-0.5 bg-destructive text-destructive-foreground text-xs rounded-full">
+                  {customOrders.filter(o => o.status === 'pending').length}
                 </span>
               )}
             </button>
@@ -822,6 +834,11 @@ export function AdminDashboard() {
               )}
             </div>
           </div>
+        )}
+
+        {/* Custom Orders Tab */}
+        {activeTab === 'custom_orders' && (
+          <CustomOrdersSection customOrders={customOrders} />
         )}
 
         {/* Analysis Tab */}

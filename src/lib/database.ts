@@ -1,6 +1,6 @@
 import { ref, get, set, push, remove, update, onValue } from 'firebase/database';
 import { database } from '@/lib/firebase';
-import { Product, SliderItem, Order, Offer } from '@/types';
+import { Product, SliderItem, Order, Offer, CustomOrder } from '@/types';
 
 // Products
 export const getProducts = async (): Promise<Product[]> => {
@@ -195,4 +195,45 @@ export const decrementOfferStock = async (offerId: string, qty: number): Promise
       sold: currentSold + qty,
     });
   }
+};
+
+// Custom Orders
+export const getCustomOrders = async (): Promise<CustomOrder[]> => {
+  const snapshot = await get(ref(database, 'customOrders'));
+  if (!snapshot.exists()) return [];
+  const data = snapshot.val();
+  return Object.entries(data).map(([id, order]) => ({
+    id,
+    ...(order as Omit<CustomOrder, 'id'>),
+  }));
+};
+
+export const subscribeToCustomOrders = (callback: (orders: CustomOrder[]) => void) => {
+  const ordersRef = ref(database, 'customOrders');
+  return onValue(ordersRef, (snapshot) => {
+    if (!snapshot.exists()) {
+      callback([]);
+      return;
+    }
+    const data = snapshot.val();
+    const orders = Object.entries(data).map(([id, order]) => ({
+      id,
+      ...(order as Omit<CustomOrder, 'id'>),
+    }));
+    callback(orders);
+  });
+};
+
+export const createCustomOrder = async (order: Omit<CustomOrder, 'id'>): Promise<string> => {
+  const newRef = push(ref(database, 'customOrders'));
+  await set(newRef, order);
+  return newRef.key!;
+};
+
+export const updateCustomOrder = async (id: string, updates: Partial<CustomOrder>): Promise<void> => {
+  await update(ref(database, `customOrders/${id}`), updates);
+};
+
+export const deleteCustomOrder = async (id: string): Promise<void> => {
+  await remove(ref(database, `customOrders/${id}`));
 };

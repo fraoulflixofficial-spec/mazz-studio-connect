@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useTheme } from '@/contexts/ThemeContext';
-import { ShoppingCart, Menu, X, Home, Sun, Moon, Package, Phone, Gift } from 'lucide-react';
+import { ShoppingCart, Menu, X, Home, Sun, Moon, Package, Phone, Gift, PackagePlus } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { useState, useEffect } from 'react';
 import { FEATURED_CATEGORIES } from '@/types';
@@ -118,6 +118,16 @@ export function Header() {
 
               {/* Divider */}
               <div className="my-4 border-t border-border" />
+
+              {/* Custom Order - Above Track Order */}
+              <Link
+                to="/custom-order"
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-muted transition-colors text-lg"
+              >
+                <PackagePlus className="w-5 h-5 text-accent" />
+                Custom Product Order
+              </Link>
 
               {/* Track Order & Contacts */}
               <Link
