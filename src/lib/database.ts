@@ -1,7 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { Product, SliderItem, Order, Offer, CustomOrder } from '@/types';
 
-// Type helper for Supabase queries (tables may not be in generated types yet)
+// Use any-typed client since tables may not be in generated types yet
 const db = supabase as any;
 
 // ============================================
@@ -12,7 +12,7 @@ export const uploadImage = async (file: File, bucket: string = 'product-images')
   const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
   const filePath = `${fileName}`;
 
-  const { error: uploadError } = await supabase.storage
+  const { error: uploadError } = await db.storage
     .from(bucket)
     .upload(filePath, file);
 
@@ -21,7 +21,7 @@ export const uploadImage = async (file: File, bucket: string = 'product-images')
     throw uploadError;
   }
 
-  const { data: { publicUrl } } = supabase.storage
+  const { data: { publicUrl } } = db.storage
     .from(bucket)
     .getPublicUrl(filePath);
 
@@ -29,12 +29,11 @@ export const uploadImage = async (file: File, bucket: string = 'product-images')
 };
 
 export const deleteImage = async (url: string, bucket: string = 'product-images'): Promise<void> => {
-  // Extract file path from URL
   const urlParts = url.split(`/${bucket}/`);
   if (urlParts.length < 2) return;
   
   const filePath = urlParts[1];
-  await supabase.storage.from(bucket).remove([filePath]);
+  await db.storage.from(bucket).remove([filePath]);
 };
 
 // ============================================
@@ -78,7 +77,7 @@ const mapProductToDb = (product: Omit<Product, 'id'>) => ({
 });
 
 export const getProducts = async (): Promise<Product[]> => {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('products')
     .select('*')
     .order('created_at', { ascending: false });
@@ -92,11 +91,9 @@ export const getProducts = async (): Promise<Product[]> => {
 };
 
 export const subscribeToProducts = (callback: (products: Product[]) => void): (() => void) => {
-  // Initial fetch
   getProducts().then(callback);
 
-  // Subscribe to realtime updates
-  const channel = supabase
+  const channel = db
     .channel('products-channel')
     .on(
       'postgres_changes',
@@ -108,12 +105,12 @@ export const subscribeToProducts = (callback: (products: Product[]) => void): ((
     .subscribe();
 
   return () => {
-    supabase.removeChannel(channel);
+    db.removeChannel(channel);
   };
 };
 
 export const addProduct = async (product: Omit<Product, 'id'>): Promise<string> => {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('products')
     .insert(mapProductToDb(product))
     .select('id')
@@ -124,7 +121,7 @@ export const addProduct = async (product: Omit<Product, 'id'>): Promise<string> 
     throw error;
   }
 
-  return data.id;
+  return data?.id;
 };
 
 export const updateProduct = async (id: string, product: Partial<Product>): Promise<void> => {
@@ -146,7 +143,7 @@ export const updateProduct = async (id: string, product: Partial<Product>): Prom
   if (product.warranty !== undefined) updates.warranty = product.warranty || null;
   if (product.couponCodes !== undefined) updates.coupon_codes = product.couponCodes || null;
 
-  const { error } = await supabase
+  const { error } = await db
     .from('products')
     .update(updates)
     .eq('id', id);
@@ -158,7 +155,7 @@ export const updateProduct = async (id: string, product: Partial<Product>): Prom
 };
 
 export const deleteProduct = async (id: string): Promise<void> => {
-  const { error } = await supabase
+  const { error } = await db
     .from('products')
     .delete()
     .eq('id', id);
@@ -170,8 +167,7 @@ export const deleteProduct = async (id: string): Promise<void> => {
 };
 
 export const decrementStock = async (productId: string, qty: number): Promise<void> => {
-  // Get current values
-  const { data: product, error: fetchError } = await supabase
+  const { data: product, error: fetchError } = await db
     .from('products')
     .select('stock, sold')
     .eq('id', productId)
@@ -185,7 +181,7 @@ export const decrementStock = async (productId: string, qty: number): Promise<vo
   const newStock = Math.max(0, product.stock - qty);
   const newSold = (product.sold || 0) + qty;
 
-  const { error } = await supabase
+  const { error } = await db
     .from('products')
     .update({ stock: newStock, sold: newSold })
     .eq('id', productId);
@@ -206,7 +202,7 @@ const mapDbSliderToSlider = (row: any): SliderItem => ({
 });
 
 export const getSliderItems = async (): Promise<SliderItem[]> => {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('slider_items')
     .select('*')
     .order('created_at', { ascending: true });
@@ -222,7 +218,7 @@ export const getSliderItems = async (): Promise<SliderItem[]> => {
 export const subscribeToSlider = (callback: (items: SliderItem[]) => void): (() => void) => {
   getSliderItems().then(callback);
 
-  const channel = supabase
+  const channel = db
     .channel('slider-channel')
     .on(
       'postgres_changes',
@@ -234,12 +230,12 @@ export const subscribeToSlider = (callback: (items: SliderItem[]) => void): (() 
     .subscribe();
 
   return () => {
-    supabase.removeChannel(channel);
+    db.removeChannel(channel);
   };
 };
 
 export const addSliderItem = async (item: Omit<SliderItem, 'id'>): Promise<string> => {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('slider_items')
     .insert({
       media_url: item.mediaUrl,
@@ -254,7 +250,7 @@ export const addSliderItem = async (item: Omit<SliderItem, 'id'>): Promise<strin
     throw error;
   }
 
-  return data.id;
+  return data?.id;
 };
 
 export const updateSliderItem = async (id: string, item: Partial<SliderItem>): Promise<void> => {
@@ -263,7 +259,7 @@ export const updateSliderItem = async (id: string, item: Partial<SliderItem>): P
   if (item.type !== undefined) updates.type = item.type;
   if (item.redirectUrl !== undefined) updates.redirect_url = item.redirectUrl;
 
-  const { error } = await supabase
+  const { error } = await db
     .from('slider_items')
     .update(updates)
     .eq('id', id);
@@ -275,7 +271,7 @@ export const updateSliderItem = async (id: string, item: Partial<SliderItem>): P
 };
 
 export const deleteSliderItem = async (id: string): Promise<void> => {
-  const { error } = await supabase
+  const { error } = await db
     .from('slider_items')
     .delete()
     .eq('id', id);
@@ -306,7 +302,7 @@ const mapDbOrderToOrder = (row: any): Order => ({
 });
 
 export const getOrders = async (): Promise<Order[]> => {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('orders')
     .select('*')
     .order('created_at', { ascending: false });
@@ -322,7 +318,7 @@ export const getOrders = async (): Promise<Order[]> => {
 export const subscribeToOrders = (callback: (orders: Order[]) => void): (() => void) => {
   getOrders().then(callback);
 
-  const channel = supabase
+  const channel = db
     .channel('orders-channel')
     .on(
       'postgres_changes',
@@ -334,12 +330,12 @@ export const subscribeToOrders = (callback: (orders: Order[]) => void): (() => v
     .subscribe();
 
   return () => {
-    supabase.removeChannel(channel);
+    db.removeChannel(channel);
   };
 };
 
 export const createOrder = async (order: Omit<Order, 'id'>): Promise<string> => {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('orders')
     .insert({
       customer_name: order.customerName,
@@ -362,11 +358,11 @@ export const createOrder = async (order: Omit<Order, 'id'>): Promise<string> => 
     throw error;
   }
 
-  return data.id;
+  return data?.id;
 };
 
 export const updateOrderStatus = async (id: string, status: Order['status']): Promise<void> => {
-  const { error } = await supabase
+  const { error } = await db
     .from('orders')
     .update({ status })
     .eq('id', id);
@@ -378,7 +374,7 @@ export const updateOrderStatus = async (id: string, status: Order['status']): Pr
 };
 
 export const deleteOrder = async (id: string): Promise<void> => {
-  const { error } = await supabase
+  const { error } = await db
     .from('orders')
     .delete()
     .eq('id', id);
@@ -408,7 +404,7 @@ const mapDbOfferToOffer = (row: any): Offer => ({
 });
 
 export const getOffers = async (): Promise<Offer[]> => {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('offers')
     .select('*')
     .order('created_at', { ascending: false });
@@ -424,7 +420,7 @@ export const getOffers = async (): Promise<Offer[]> => {
 export const subscribeToOffers = (callback: (offers: Offer[]) => void): (() => void) => {
   getOffers().then(callback);
 
-  const channel = supabase
+  const channel = db
     .channel('offers-channel')
     .on(
       'postgres_changes',
@@ -436,12 +432,12 @@ export const subscribeToOffers = (callback: (offers: Offer[]) => void): (() => v
     .subscribe();
 
   return () => {
-    supabase.removeChannel(channel);
+    db.removeChannel(channel);
   };
 };
 
 export const addOffer = async (offer: Omit<Offer, 'id'>): Promise<string> => {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('offers')
     .insert({
       title: offer.title,
@@ -463,7 +459,7 @@ export const addOffer = async (offer: Omit<Offer, 'id'>): Promise<string> => {
     throw error;
   }
 
-  return data.id;
+  return data?.id;
 };
 
 export const updateOffer = async (id: string, offer: Partial<Offer>): Promise<void> => {
@@ -480,7 +476,7 @@ export const updateOffer = async (id: string, offer: Partial<Offer>): Promise<vo
   if (offer.warranty !== undefined) updates.warranty = offer.warranty || null;
   if (offer.couponCodes !== undefined) updates.coupon_codes = offer.couponCodes || null;
 
-  const { error } = await supabase
+  const { error } = await db
     .from('offers')
     .update(updates)
     .eq('id', id);
@@ -492,7 +488,7 @@ export const updateOffer = async (id: string, offer: Partial<Offer>): Promise<vo
 };
 
 export const deleteOffer = async (id: string): Promise<void> => {
-  const { error } = await supabase
+  const { error } = await db
     .from('offers')
     .delete()
     .eq('id', id);
@@ -504,7 +500,7 @@ export const deleteOffer = async (id: string): Promise<void> => {
 };
 
 export const decrementOfferStock = async (offerId: string, qty: number): Promise<void> => {
-  const { data: offer, error: fetchError } = await supabase
+  const { data: offer, error: fetchError } = await db
     .from('offers')
     .select('stock, sold')
     .eq('id', offerId)
@@ -518,7 +514,7 @@ export const decrementOfferStock = async (offerId: string, qty: number): Promise
   const newStock = Math.max(0, offer.stock - qty);
   const newSold = (offer.sold || 0) + qty;
 
-  const { error } = await supabase
+  const { error } = await db
     .from('offers')
     .update({ stock: newStock, sold: newSold })
     .eq('id', offerId);
@@ -553,7 +549,7 @@ const mapDbCustomOrderToCustomOrder = (row: any): CustomOrder => ({
 });
 
 export const getCustomOrders = async (): Promise<CustomOrder[]> => {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('custom_orders')
     .select('*')
     .order('created_at', { ascending: false });
@@ -569,7 +565,7 @@ export const getCustomOrders = async (): Promise<CustomOrder[]> => {
 export const subscribeToCustomOrders = (callback: (orders: CustomOrder[]) => void): (() => void) => {
   getCustomOrders().then(callback);
 
-  const channel = supabase
+  const channel = db
     .channel('custom-orders-channel')
     .on(
       'postgres_changes',
@@ -581,12 +577,12 @@ export const subscribeToCustomOrders = (callback: (orders: CustomOrder[]) => voi
     .subscribe();
 
   return () => {
-    supabase.removeChannel(channel);
+    db.removeChannel(channel);
   };
 };
 
 export const createCustomOrder = async (order: Omit<CustomOrder, 'id'>): Promise<string> => {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('custom_orders')
     .insert({
       customer_name: order.customerName,
@@ -614,7 +610,7 @@ export const createCustomOrder = async (order: Omit<CustomOrder, 'id'>): Promise
     throw error;
   }
 
-  return data.id;
+  return data?.id;
 };
 
 export const updateCustomOrder = async (id: string, updates: Partial<CustomOrder>): Promise<void> => {
@@ -637,7 +633,7 @@ export const updateCustomOrder = async (id: string, updates: Partial<CustomOrder
   if (updates.status !== undefined) dbUpdates.status = updates.status;
   if (updates.adminNotes !== undefined) dbUpdates.admin_notes = updates.adminNotes || null;
 
-  const { error } = await supabase
+  const { error } = await db
     .from('custom_orders')
     .update(dbUpdates)
     .eq('id', id);
@@ -649,7 +645,7 @@ export const updateCustomOrder = async (id: string, updates: Partial<CustomOrder
 };
 
 export const deleteCustomOrder = async (id: string): Promise<void> => {
-  const { error } = await supabase
+  const { error } = await db
     .from('custom_orders')
     .delete()
     .eq('id', id);
@@ -664,7 +660,7 @@ export const deleteCustomOrder = async (id: string): Promise<void> => {
 // SETTINGS
 // ============================================
 export const getSetting = async (key: string): Promise<any> => {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('settings')
     .select('value')
     .eq('id', key)
@@ -679,7 +675,7 @@ export const getSetting = async (key: string): Promise<any> => {
 };
 
 export const setSetting = async (key: string, value: any): Promise<void> => {
-  const { error } = await supabase
+  const { error } = await db
     .from('settings')
     .upsert({ id: key, value }, { onConflict: 'id' });
 
@@ -692,18 +688,18 @@ export const setSetting = async (key: string, value: any): Promise<void> => {
 export const subscribeToSetting = (key: string, callback: (value: any) => void): (() => void) => {
   getSetting(key).then(callback);
 
-  const channel = supabase
+  const channel = db
     .channel(`settings-${key}`)
     .on(
       'postgres_changes',
       { event: '*', schema: 'public', table: 'settings', filter: `id=eq.${key}` },
-      (payload) => {
-        callback((payload.new as any)?.value || null);
+      (payload: any) => {
+        callback(payload.new?.value || null);
       }
     )
     .subscribe();
 
   return () => {
-    supabase.removeChannel(channel);
+    db.removeChannel(channel);
   };
 };

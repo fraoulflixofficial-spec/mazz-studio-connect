@@ -1,6 +1,8 @@
-import { ref, get, set, push, onValue, query, orderByChild, startAt, endAt, remove } from 'firebase/database';
-import { database } from '@/lib/firebase';
-import { VisitorRecord, ProductViewRecord, Order } from '@/types';
+import { supabase } from '@/integrations/supabase/client';
+import { Order } from '@/types';
+
+// Use any-typed client for tables not yet in generated types
+const db = supabase as any;
 
 // Generate a unique visitor ID using localStorage
 export const getVisitorId = (): string => {
@@ -26,14 +28,18 @@ export const trackVisitor = async (): Promise<void> => {
   // Only track once per day per visitor
   if (sessionStorage.getItem(sessionKey)) return;
   
-  const visitRef = push(ref(database, 'analytics/visitors'));
-  await set(visitRef, {
-    visitorId,
-    timestamp: Date.now(),
-    date: today,
-  });
-  
-  sessionStorage.setItem(sessionKey, 'true');
+  try {
+    await db
+      .from('analytics_visitors')
+      .insert({
+        visitor_id: visitorId,
+        date: today,
+      });
+    
+    sessionStorage.setItem(sessionKey, 'true');
+  } catch (error) {
+    console.error('Error tracking visitor:', error);
+  }
 };
 
 // Track product view
@@ -45,15 +51,19 @@ export const trackProductView = async (productId: string): Promise<void> => {
   // Only track once per product per day per visitor
   if (sessionStorage.getItem(viewKey)) return;
   
-  const viewRef = push(ref(database, 'analytics/productViews'));
-  await set(viewRef, {
-    productId,
-    visitorId,
-    timestamp: Date.now(),
-    date: today,
-  });
-  
-  sessionStorage.setItem(viewKey, 'true');
+  try {
+    await db
+      .from('analytics_product_views')
+      .insert({
+        product_id: productId,
+        visitor_id: visitorId,
+        date: today,
+      });
+    
+    sessionStorage.setItem(viewKey, 'true');
+  } catch (error) {
+    console.error('Error tracking product view:', error);
+  }
 };
 
 // Date utility functions
@@ -102,55 +112,49 @@ export const getDateRanges = (periodStart?: string, periodEnd?: string) => {
   };
 };
 
-// Subscribe to visitor analytics with period filtering
-export const subscribeToVisitorAnalytics = (
-  callback: (data: { today: number; lastWeek: number; currentMonth: number; lastMonth: number }) => void,
-  periodStart?: string,
-  periodEnd?: string
-) => {
-  const visitorsRef = ref(database, 'analytics/visitors');
+// Get visitor analytics data
+export const getVisitorAnalytics = async (periodStart?: string, periodEnd?: string) => {
+  const ranges = getDateRanges(periodStart, periodEnd);
+  const data = { today: 0, lastWeek: 0, currentMonth: 0, lastMonth: 0 };
   
-  return onValue(visitorsRef, (snapshot) => {
-    const ranges = getDateRanges(periodStart, periodEnd);
-    const data = { today: 0, lastWeek: 0, currentMonth: 0, lastMonth: 0 };
+  try {
+    const { data: visitors, error } = await db
+      .from('analytics_visitors')
+      .select('visitor_id, date');
     
-    if (!snapshot.exists()) {
-      callback(data);
-      return;
+    if (error) {
+      console.error('Error fetching visitors:', error);
+      return data;
     }
     
-    const visitors = snapshot.val();
     const uniqueToday = new Set<string>();
     const uniqueLastWeek = new Set<string>();
     const uniqueCurrentPeriod = new Set<string>();
     const uniqueLastPeriod = new Set<string>();
     
-    Object.values(visitors).forEach((v: any) => {
+    (visitors || []).forEach((v: any) => {
       const date = v.date;
       
-      // Only count data within the collection period
       if (periodStart && periodEnd) {
         if (date < periodStart || date > periodEnd) {
-          // Skip data outside current period for current metrics
-          // But still check last period
           if (date >= ranges.lastPeriodStart && date <= ranges.lastPeriodEnd) {
-            uniqueLastPeriod.add(v.visitorId);
+            uniqueLastPeriod.add(v.visitor_id);
           }
           return;
         }
       }
       
       if (date === ranges.today) {
-        uniqueToday.add(v.visitorId);
+        uniqueToday.add(v.visitor_id);
       }
       if (date >= ranges.lastWeekStart && date <= ranges.today) {
-        uniqueLastWeek.add(v.visitorId);
+        uniqueLastWeek.add(v.visitor_id);
       }
       if (date >= ranges.currentPeriodStart && date <= ranges.currentPeriodEnd) {
-        uniqueCurrentPeriod.add(v.visitorId);
+        uniqueCurrentPeriod.add(v.visitor_id);
       }
       if (date >= ranges.lastPeriodStart && date <= ranges.lastPeriodEnd) {
-        uniqueLastPeriod.add(v.visitorId);
+        uniqueLastPeriod.add(v.visitor_id);
       }
     });
     
@@ -158,53 +162,68 @@ export const subscribeToVisitorAnalytics = (
     data.lastWeek = uniqueLastWeek.size;
     data.currentMonth = uniqueCurrentPeriod.size;
     data.lastMonth = uniqueLastPeriod.size;
-    
-    callback(data);
-  });
+  } catch (error) {
+    console.error('Error in getVisitorAnalytics:', error);
+  }
+  
+  return data;
 };
 
-// Subscribe to product view analytics with period filtering
-export const subscribeToProductViewAnalytics = (
-  callback: (data: { 
-    today: number; 
-    lastWeek: number; 
-    currentMonth: number; 
-    lastMonth: number;
-    mostViewedProductId: string | null;
-    productViewCounts: Record<string, number>;
-  }) => void,
+// Subscribe to visitor analytics with period filtering
+export const subscribeToVisitorAnalytics = (
+  callback: (data: { today: number; lastWeek: number; currentMonth: number; lastMonth: number }) => void,
   periodStart?: string,
   periodEnd?: string
 ) => {
-  const viewsRef = ref(database, 'analytics/productViews');
+  // Initial fetch
+  getVisitorAnalytics(periodStart, periodEnd).then(callback);
+
+  // Subscribe to realtime updates
+  const channel = db
+    .channel('visitors-analytics-channel')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'analytics_visitors' },
+      () => {
+        getVisitorAnalytics(periodStart, periodEnd).then(callback);
+      }
+    )
+    .subscribe();
+
+  return () => {
+    db.removeChannel(channel);
+  };
+};
+
+// Get product view analytics data
+export const getProductViewAnalytics = async (periodStart?: string, periodEnd?: string) => {
+  const ranges = getDateRanges(periodStart, periodEnd);
+  const data = { 
+    today: 0, 
+    lastWeek: 0, 
+    currentMonth: 0, 
+    lastMonth: 0,
+    mostViewedProductId: null as string | null,
+    productViewCounts: {} as Record<string, number>,
+  };
   
-  return onValue(viewsRef, (snapshot) => {
-    const ranges = getDateRanges(periodStart, periodEnd);
-    const data = { 
-      today: 0, 
-      lastWeek: 0, 
-      currentMonth: 0, 
-      lastMonth: 0,
-      mostViewedProductId: null as string | null,
-      productViewCounts: {} as Record<string, number>,
-    };
+  try {
+    const { data: views, error } = await db
+      .from('analytics_product_views')
+      .select('product_id, date');
     
-    if (!snapshot.exists()) {
-      callback(data);
-      return;
+    if (error) {
+      console.error('Error fetching product views:', error);
+      return data;
     }
     
-    const views = snapshot.val();
     const currentPeriodProductViews: Record<string, number> = {};
     
-    Object.values(views).forEach((v: any) => {
+    (views || []).forEach((v: any) => {
       const date = v.date;
       
-      // Only count data within the collection period for current metrics
       if (periodStart && periodEnd) {
         if (date < periodStart || date > periodEnd) {
-          // Skip data outside current period for current metrics
-          // But still check last period
           if (date >= ranges.lastPeriodStart && date <= ranges.lastPeriodEnd) {
             data.lastMonth++;
           }
@@ -220,8 +239,7 @@ export const subscribeToProductViewAnalytics = (
       }
       if (date >= ranges.currentPeriodStart && date <= ranges.currentPeriodEnd) {
         data.currentMonth++;
-        // Track per-product views for current period
-        currentPeriodProductViews[v.productId] = (currentPeriodProductViews[v.productId] || 0) + 1;
+        currentPeriodProductViews[v.product_id] = (currentPeriodProductViews[v.product_id] || 0) + 1;
       }
       if (date >= ranges.lastPeriodStart && date <= ranges.lastPeriodEnd) {
         data.lastMonth++;
@@ -238,8 +256,44 @@ export const subscribeToProductViewAnalytics = (
     });
     
     data.productViewCounts = currentPeriodProductViews;
-    callback(data);
-  });
+  } catch (error) {
+    console.error('Error in getProductViewAnalytics:', error);
+  }
+  
+  return data;
+};
+
+// Subscribe to product view analytics with period filtering
+export const subscribeToProductViewAnalytics = (
+  callback: (data: { 
+    today: number; 
+    lastWeek: number; 
+    currentMonth: number; 
+    lastMonth: number;
+    mostViewedProductId: string | null;
+    productViewCounts: Record<string, number>;
+  }) => void,
+  periodStart?: string,
+  periodEnd?: string
+) => {
+  // Initial fetch
+  getProductViewAnalytics(periodStart, periodEnd).then(callback);
+
+  // Subscribe to realtime updates
+  const channel = db
+    .channel('product-views-analytics-channel')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'analytics_product_views' },
+      () => {
+        getProductViewAnalytics(periodStart, periodEnd).then(callback);
+      }
+    )
+    .subscribe();
+
+  return () => {
+    db.removeChannel(channel);
+  };
 };
 
 // Calculate sales analytics from orders with period filtering
@@ -262,11 +316,8 @@ export const calculateSalesAnalytics = (orders: Order[], periodStart?: string, p
     const orderDate = getDateString(new Date(order.createdAt));
     const totalQty = order.items.reduce((sum, item) => sum + item.qty, 0);
     
-    // Only count data within the collection period for current metrics
     if (periodStart && periodEnd) {
       if (orderDate < periodStart || orderDate > periodEnd) {
-        // Skip data outside current period for current metrics
-        // But still check last period
         if (orderDate >= ranges.lastPeriodStart && orderDate <= ranges.lastPeriodEnd) {
           data.sales.lastMonth += totalQty;
           data.revenue.lastMonth += order.total;
@@ -286,7 +337,6 @@ export const calculateSalesAnalytics = (orders: Order[], periodStart?: string, p
     if (orderDate >= ranges.currentPeriodStart && orderDate <= ranges.currentPeriodEnd) {
       data.sales.currentMonth += totalQty;
       data.revenue.currentMonth += order.total;
-      // Track per-product sales for current period
       order.items.forEach((item) => {
         currentPeriodProductSales[item.productId] = (currentPeriodProductSales[item.productId] || 0) + item.qty;
       });
@@ -312,30 +362,17 @@ export const cleanupOldAnalytics = async (): Promise<void> => {
   cutoffDate.setDate(cutoffDate.getDate() - 60);
   const cutoffString = getDateString(cutoffDate);
   
-  const visitorsRef = ref(database, 'analytics/visitors');
-  const viewsRef = ref(database, 'analytics/productViews');
-  
-  const visitorsSnapshot = await get(visitorsRef);
-  if (visitorsSnapshot.exists()) {
-    const visitors = visitorsSnapshot.val();
-    const deletions: Promise<void>[] = [];
-    Object.entries(visitors).forEach(([key, v]: [string, any]) => {
-      if (v.date < cutoffString) {
-        deletions.push(remove(ref(database, `analytics/visitors/${key}`)));
-      }
-    });
-    await Promise.all(deletions);
-  }
-  
-  const viewsSnapshot = await get(viewsRef);
-  if (viewsSnapshot.exists()) {
-    const views = viewsSnapshot.val();
-    const deletions: Promise<void>[] = [];
-    Object.entries(views).forEach(([key, v]: [string, any]) => {
-      if (v.date < cutoffString) {
-        deletions.push(remove(ref(database, `analytics/productViews/${key}`)));
-      }
-    });
-    await Promise.all(deletions);
+  try {
+    await db
+      .from('analytics_visitors')
+      .delete()
+      .lt('date', cutoffString);
+    
+    await db
+      .from('analytics_product_views')
+      .delete()
+      .lt('date', cutoffString);
+  } catch (error) {
+    console.error('Error cleaning up analytics:', error);
   }
 };
