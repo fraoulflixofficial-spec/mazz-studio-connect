@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ref, get, set, onValue } from 'firebase/database';
-import { database } from '@/lib/firebase';
+import { getSetting, setSetting, subscribeToSetting } from '@/lib/database';
 import { Calendar, Clock, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -16,11 +15,9 @@ interface CountdownTime {
 }
 
 export const getDataCollectionPeriod = async (): Promise<{ startDate: Date; endDate: Date }> => {
-  const periodRef = ref(database, 'analytics/collectionPeriod');
-  const snapshot = await get(periodRef);
+  const data = await getSetting('collectionPeriod');
   
-  if (snapshot.exists()) {
-    const data = snapshot.val();
+  if (data) {
     const startDate = new Date(data.startDate);
     const endDate = new Date(data.endDate);
     
@@ -40,8 +37,7 @@ const initializeNewPeriod = async (): Promise<{ startDate: Date; endDate: Date }
   const endDate = new Date(startDate);
   endDate.setDate(endDate.getDate() + 30);
   
-  const periodRef = ref(database, 'analytics/collectionPeriod');
-  await set(periodRef, {
+  await setSetting('collectionPeriod', {
     startDate: startDate.toISOString(),
     endDate: endDate.toISOString(),
   });
@@ -56,11 +52,19 @@ export function DataCollectionPeriod({ onPeriodChange }: DataCollectionPeriodPro
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const periodRef = ref(database, 'analytics/collectionPeriod');
-    
-    const unsubscribe = onValue(periodRef, async (snapshot) => {
-      if (snapshot.exists()) {
-        const data = snapshot.val();
+    const initPeriod = async () => {
+      const { startDate: start, endDate: end } = await getDataCollectionPeriod();
+      setStartDate(start);
+      setEndDate(end);
+      onPeriodChange?.(start, end);
+      setLoading(false);
+    };
+
+    initPeriod();
+
+    // Subscribe to settings changes
+    const unsubscribe = subscribeToSetting('collectionPeriod', async (data) => {
+      if (data) {
         const start = new Date(data.startDate);
         const end = new Date(data.endDate);
         
@@ -75,13 +79,7 @@ export function DataCollectionPeriod({ onPeriodChange }: DataCollectionPeriodPro
           setEndDate(end);
           onPeriodChange?.(start, end);
         }
-      } else {
-        const newPeriod = await initializeNewPeriod();
-        setStartDate(newPeriod.startDate);
-        setEndDate(newPeriod.endDate);
-        onPeriodChange?.(newPeriod.startDate, newPeriod.endDate);
       }
-      setLoading(false);
     });
 
     return () => unsubscribe();

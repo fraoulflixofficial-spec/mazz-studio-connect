@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Filter, X, Calendar } from 'lucide-react';
-import { ref, get, set } from 'firebase/database';
-import { database } from '@/lib/firebase';
+import { getSetting, setSetting } from '@/lib/database';
 
 interface OrderFilters {
   orderId: string;
@@ -32,26 +31,25 @@ export function OrdersFilterSection({ onFiltersChange }: OrdersFilterSectionProp
   // Initialize and manage 6-month reset period
   useEffect(() => {
     const initResetPeriod = async () => {
-      const resetRef = ref(database, 'settings/ordersResetDate');
-      const snapshot = await get(resetRef);
+      const data = await getSetting('ordersResetDate');
 
       let resetDateValue: Date;
 
-      if (snapshot.exists()) {
-        resetDateValue = new Date(snapshot.val());
+      if (data) {
+        resetDateValue = new Date(data);
         
         // Check if reset date has passed
         if (resetDateValue <= new Date()) {
           // Start new 6-month period
           resetDateValue = new Date();
           resetDateValue.setMonth(resetDateValue.getMonth() + 6);
-          await set(resetRef, resetDateValue.toISOString());
+          await setSetting('ordersResetDate', resetDateValue.toISOString());
         }
       } else {
         // Initialize first 6-month period
         resetDateValue = new Date();
         resetDateValue.setMonth(resetDateValue.getMonth() + 6);
-        await set(resetRef, resetDateValue.toISOString());
+        await setSetting('ordersResetDate', resetDateValue.toISOString());
       }
 
       setResetDate(resetDateValue);
