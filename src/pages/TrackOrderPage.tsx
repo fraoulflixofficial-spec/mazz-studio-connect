@@ -3,10 +3,11 @@ import { Header } from '@/components/user/Header';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, Package, CheckCircle2, Truck, MapPin, Home as HomeIcon } from 'lucide-react';
-import { ref, get } from 'firebase/database';
-import { database } from '@/lib/firebase';
+import { supabase } from '@/integrations/supabase/client';
 import { Order, OrderStatus } from '@/types';
 import { formatPrice } from '@/lib/helpers';
+
+const db = supabase as any;
 
 const ORDER_STEPS: { status: OrderStatus; label: string; icon: React.ReactNode }[] = [
   { status: 'placed', label: 'Order Placed', icon: <Package className="w-5 h-5" /> },
@@ -35,28 +36,33 @@ export default function TrackOrderPage() {
     setSearched(true);
 
     try {
-      const snapshot = await get(ref(database, 'orders'));
-      if (snapshot.exists()) {
-        const data = snapshot.val();
-        const orders = Object.entries(data).map(([id, o]) => ({
-          id,
-          ...(o as Omit<Order, 'id'>),
-        }));
-        
-        const found = orders.find(o => 
-          o.id === orderId.trim() || 
-          o.id.toLowerCase().includes(orderId.trim().toLowerCase())
-        );
-        
-        if (found) {
-          setOrder(found);
-        } else {
-          setOrder(null);
-          setError('Order not found. Please check your Order ID.');
-        }
+      const { data, error: fetchError } = await db
+        .from('orders')
+        .select('*')
+        .or(`id.eq.${orderId.trim()},id.ilike.%${orderId.trim()}%`);
+
+      if (fetchError) throw fetchError;
+
+      if (data && data.length > 0) {
+        const row = data[0];
+        setOrder({
+          id: row.id,
+          customerName: row.customer_name,
+          phone: row.phone,
+          address: row.address,
+          items: row.items || [],
+          total: Number(row.total),
+          subtotal: Number(row.subtotal),
+          deliveryCharge: Number(row.delivery_charge),
+          deliveryZone: row.delivery_zone,
+          status: row.status,
+          createdAt: new Date(row.created_at).getTime(),
+          notes: row.notes,
+          appliedCoupon: row.applied_coupon,
+        });
       } else {
         setOrder(null);
-        setError('No orders found in the system.');
+        setError('Order not found. Please check your Order ID.');
       }
     } catch (err) {
       setError('Failed to fetch order. Please try again.');
@@ -80,7 +86,6 @@ export default function TrackOrderPage() {
           Track Your Order
         </h1>
 
-        {/* Search Form */}
         <div className="flex gap-2 mb-8">
           <Input
             placeholder="Enter Order ID"
@@ -95,17 +100,14 @@ export default function TrackOrderPage() {
           </Button>
         </div>
 
-        {/* Error Message */}
         {error && (
           <div className="p-4 bg-destructive/10 text-destructive rounded-lg text-center mb-8">
             {error}
           </div>
         )}
 
-        {/* Order Details */}
         {order && (
           <div className="space-y-6">
-            {/* Order Info Card */}
             <div className="bg-card rounded-xl p-6 border border-border">
               <div className="flex justify-between items-start mb-4">
                 <div>
@@ -117,7 +119,6 @@ export default function TrackOrderPage() {
                   <p className="font-bold text-accent">{formatPrice(order.total)}</p>
                 </div>
               </div>
-              
               <div className="text-sm text-muted-foreground">
                 <p>Customer: {order.customerName}</p>
                 <p>Address: {order.address}</p>
@@ -125,47 +126,26 @@ export default function TrackOrderPage() {
               </div>
             </div>
 
-            {/* Progress Tracker */}
             <div className="bg-card rounded-xl p-6 border border-border">
               <h3 className="font-medium mb-6">Order Progress</h3>
-              
               <div className="relative">
-                {/* Progress Line */}
                 <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-border" />
                 <div 
                   className="absolute left-6 top-0 w-0.5 bg-accent transition-all duration-500"
-                  style={{ 
-                    height: `${Math.max(0, (currentStepIndex / (ORDER_STEPS.length - 1)) * 100)}%` 
-                  }}
+                  style={{ height: `${Math.max(0, (currentStepIndex / (ORDER_STEPS.length - 1)) * 100)}%` }}
                 />
-
-                {/* Steps */}
                 <div className="space-y-6">
                   {ORDER_STEPS.map((step, index) => {
                     const isCompleted = index <= currentStepIndex;
                     const isCurrent = index === currentStepIndex;
-                    
                     return (
                       <div key={step.status} className="relative flex items-center gap-4">
-                        <div 
-                          className={`
-                            w-12 h-12 rounded-full flex items-center justify-center z-10 transition-all
-                            ${isCompleted 
-                              ? 'bg-accent text-accent-foreground' 
-                              : 'bg-muted text-muted-foreground'
-                            }
-                            ${isCurrent ? 'ring-4 ring-accent/30 scale-110' : ''}
-                          `}
-                        >
+                        <div className={`w-12 h-12 rounded-full flex items-center justify-center z-10 transition-all ${isCompleted ? 'bg-accent text-accent-foreground' : 'bg-muted text-muted-foreground'} ${isCurrent ? 'ring-4 ring-accent/30 scale-110' : ''}`}>
                           {step.icon}
                         </div>
                         <div>
-                          <p className={`font-medium ${isCompleted ? 'text-foreground' : 'text-muted-foreground'}`}>
-                            {step.label}
-                          </p>
-                          {isCurrent && (
-                            <p className="text-sm text-accent">Current Status</p>
-                          )}
+                          <p className={`font-medium ${isCompleted ? 'text-foreground' : 'text-muted-foreground'}`}>{step.label}</p>
+                          {isCurrent && <p className="text-sm text-accent">Current Status</p>}
                         </div>
                       </div>
                     );
@@ -174,7 +154,6 @@ export default function TrackOrderPage() {
               </div>
             </div>
 
-            {/* Order Items */}
             <div className="bg-card rounded-xl p-6 border border-border">
               <h3 className="font-medium mb-4">Order Items</h3>
               <div className="space-y-3">
@@ -192,7 +171,6 @@ export default function TrackOrderPage() {
           </div>
         )}
 
-        {/* Empty State */}
         {searched && !order && !error && !loading && (
           <div className="text-center py-12 text-muted-foreground">
             <Package className="w-16 h-16 mx-auto mb-4 opacity-50" />
